@@ -7,11 +7,19 @@ namespace COG.Dredger
         public override void Update(double dt)
         {
             Console.WriteLine("update");
+            ProcessKeyboard();
         }
 
         public override void Render(double dt)
         {
             Console.WriteLine("render");
+        }
+
+        private void ProcessKeyboard()
+        {
+            var keyboard = OpenTK.Input.Keyboard.GetState();
+            if (keyboard[OpenTK.Input.Key.Escape])
+                m_engine.Stop("User pressed escape from main menu");
         }
     }
 

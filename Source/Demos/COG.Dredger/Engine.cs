@@ -11,6 +11,7 @@ namespace COG.Dredger
 {
     //reference link http://www.javased.com/?source_dir=TeraSpout/src/main/java/org/terasology/game/modes/StateMainMenu.java
     //https://github.com/RexMorgan/Heliocentricity/tree/master/src/Heliocentricity.Common
+
     public abstract class GameState
     {
         protected Engine m_engine;
@@ -54,8 +55,11 @@ namespace COG.Dredger
             m_isRunning = true;
             Initialize();
 
-            m_states.Push(initialState);
+            ChangeState(initialState);
+
             m_gameWindow.Visible = true;
+
+            ProcessStateChanges();
 
             var sw = Stopwatch.StartNew();
             var lastFrame = 0.0;
