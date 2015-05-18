@@ -1,12 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using COG.Logging;
 
 namespace COG.Assets
 {
     public abstract class AbstractSource : IAssetSource
     {
-        //private readonly static Logger logger = Logger.getLogger(typeof(AbstractSource));
+        private readonly static Logger logger = Logger.getLogger(typeof(AbstractSource));
 
         private Dictionary<AssetUri, IAssetEntry> m_entries = new Dictionary<AssetUri, IAssetEntry>();
         private Dictionary<int, List<IAssetEntry>> m_entryByTypes = new Dictionary<int, List<IAssetEntry>>();
@@ -35,16 +36,16 @@ namespace COG.Assets
         {
             if (m_entries.ContainsKey(ae.uri))
             {
-                //logger.warn("{0} already existed", ae.uri);
+                logger.warn("{0} already existed", ae.uri);
             }
 
             m_entries[ae.uri] = ae;
 
             List<IAssetEntry> byType;
-            if (!m_entryByTypes.TryGetValue(ae.uri.type.id, out byType))
+            if (!m_entryByTypes.TryGetValue(ae.uri.Type.id, out byType))
             {
                 byType = new List<IAssetEntry>();
-                m_entryByTypes.Add(ae.uri.type.id, byType);
+                m_entryByTypes.Add(ae.uri.Type.id, byType);
             }
 
             byType.Add(ae);
@@ -94,9 +95,9 @@ namespace COG.Assets
                     var name = parts[1].Substring(0, extensionSeparator);
                     var extension = parts[1].Substring(extensionSeparator + 1);
                     AssetType assetType;
-                    if (AssetType.getTypeFor(parts[0], extension, out assetType))
+                    if (AssetType.GetTypeFor(parts[0], extension, out assetType))
                     {
-                        return assetType.getUri(ID, name);
+                        return assetType.CreateUri(ID, name);
                     }
                 }
             }

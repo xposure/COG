@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using COG.Logging;
 //using cphillips;
 
 namespace COG.Assets
@@ -28,7 +29,7 @@ namespace COG.Assets
             }
         }
 
-        //private static readonly Logger logger = Logger.getLogger(typeof(DirectorySource));
+        private static readonly Logger logger = Logger.getLogger(typeof(DirectorySource));
 
         private string _directory;
 
@@ -45,7 +46,7 @@ namespace COG.Assets
         {
             if (!System.IO.Directory.Exists(_directory))
             {
-                //logger.error("Directory not found '{0}'", _directory);
+                logger.error("Directory not found '{0}'", _directory);
                 return;
             }
 
@@ -60,9 +61,9 @@ namespace COG.Assets
                 {
                     var relFile = file.Substring(_directory.Length + 1).Replace("\\", "/");
                     var uri = getAssetUri(relFile);
-                    if (!uri.isValid())
+                    if (!uri.IsValid())
                     {
-                        //logger.error("Could not get a valid uri for '{0}'", relFile);
+                        logger.error("Could not get a valid uri for '{0}'", relFile);
                         continue;
                     }
 

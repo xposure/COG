@@ -1,114 +1,131 @@
-﻿
-using System;
+﻿using System;
+using COG.Framework;
+
 namespace COG.Assets
 {
-    public struct AssetUri : IComparable<AssetUri>, IEquatable<AssetUri>
+    public struct AssetUri : IUri
     {
-        /// <summary>
-        /// The character(s) use to separate the module name from other parts of the Uri
-        /// </summary>    
         public static readonly char MODULE_SEPARATOR = ':';
         public static readonly char TYPE_SEPARATOR = ':';
 
-        private string normalisedName;
-        private string name;
+        private int m_hashCode;
+        private string m_moduleName, m_assetName;
+        private AssetType m_type;
 
-        public static readonly AssetUri NULL = new AssetUri(AssetType.NULL, "engine", "null");
+        public static readonly AssetUri NULL = new AssetUri("engine", AssetType.NULL, "<invalid>");
 
         #region Constructors
-        /// <summary>
-        /// Creates a SimpleUri from a string in the format "module:object". If the string does not match this format, it will be marked invalid
-        /// </summary>
-        /// <param name="simpleUri">module:object string</param>
-        public AssetUri(string simpleUri)
+        public AssetUri(string moduleName, AssetType type, string assetName)
             : this()
         {
-            string[] split = simpleUri.Split(MODULE_SEPARATOR);
-            if (split.Length == 3)
-            {
-                moduleName = split[0];
-                normalisedModuleName = split[0].ToLowerInvariant();
-                type = AssetType.find(split[1]);
-                objectName = split[2];
-                normalisedObjectName = split[2].ToLowerInvariant();
-                normalisedName = normalisedModuleName + MODULE_SEPARATOR + type.name.ToLowerInvariant() + TYPE_SEPARATOR + normalisedObjectName;
-                name = moduleName + MODULE_SEPARATOR + type.name + TYPE_SEPARATOR + objectName;
-            }
-        }
+            Contract.RequiresNotEmpty(moduleName, "moduleName");
+            Contract.RequiresNotNull(type, "type");
+            Contract.RequiresNotEmpty(assetName, "objectName");
 
-        /// <summary>
-        /// Creates a SimpleUri for the given module:object combo
-        /// </summary>
-        /// <param name="moduleName"></param>
-        /// <param name="objectName"></param>
-        public AssetUri(AssetType _type, string _moduleName, string _objectName)
-            : this()
-        {
-            //Contract.RequiresNotEmpty(_moduleName, "moduleName");
-            //Contract.RequiresNotEmpty(_objectName, "objectName");
-
-            type = _type;
-            moduleName = _moduleName;
-            objectName = _objectName;
-            normalisedModuleName = _moduleName.ToLowerInvariant();
-            normalisedObjectName = _objectName.ToLowerInvariant();
-            normalisedName = normalisedModuleName + MODULE_SEPARATOR + type.name.ToLowerInvariant() + TYPE_SEPARATOR + normalisedObjectName;
-            name = moduleName + MODULE_SEPARATOR + type.name + TYPE_SEPARATOR + objectName;
+            m_hashCode = 0;
+            m_type = type;
+            m_moduleName = moduleName;
+            m_assetName = assetName;
+            
+            ComputeHashCode();
         }
         #endregion Constructors
 
         #region Properties
 
-        public AssetType type { get; private set; }
+        public AssetType Type { get { return m_type; } }
 
-        public string moduleName { get; private set; }
+        public string Module { get { return m_moduleName; } }
 
-        public string normalisedModuleName { get; private set; }
-
-        public string objectName { get; private set; }
-
-        public string normalisedObjectName { get; private set; }
+        public string Name { get { return m_assetName; } }
 
         #endregion Properties
 
         #region Methods
 
-        public bool isValid()
+        private void ComputeHashCode()
         {
-            return type != AssetType.NULL && !string.IsNullOrEmpty(normalisedModuleName) && !string.IsNullOrEmpty(normalisedObjectName);
+            if (string.IsNullOrEmpty(m_moduleName) || string.IsNullOrEmpty(m_assetName) || m_type == null)
+            {
+                m_hashCode = 0;
+            }
+            else
+            {
+                var normalizedModuleName = UriUtil.normalise(m_moduleName);
+                var normalizedAssetName = UriUtil.normalise(m_assetName);
+
+                m_hashCode = normalizedModuleName.GetHashCode() ^ m_type.GetHashCode() ^ normalizedAssetName.GetHashCode();
+            }
         }
 
-        public string toNormalisedString()
+        public bool IsValid()
         {
-            if (!isValid())
+            return m_hashCode != 0 && m_hashCode != NULL.m_hashCode;
+        }
+
+        public static AssetUri ParseUri(string uri)
+        {
+            string[] split = uri.Split(MODULE_SEPARATOR);
+            if (split.Length == 3)
             {
-                return string.Empty;
+                var type = AssetType.Find(split[1]);
+                if (type != null)
+                    return new AssetUri(split[0], type, split[2]);
             }
-            return normalisedName;
+
+            return NULL;
+        }
+
+        public string ToNormalizedString()
+        {
+            if (!IsValid())
+            {
+                return NULL.ToNormalizedString();
+            }
+
+            var normalizedModuleName = UriUtil.normalise(m_moduleName);
+            var normalizedTypeName = UriUtil.normalise(m_type.name);
+            var normalizedAssetName = UriUtil.normalise(m_assetName);
+
+            return string.Format("{0}{1}{2}{3}{4}{5}", normalizedModuleName, MODULE_SEPARATOR,
+                normalizedTypeName, TYPE_SEPARATOR, normalizedAssetName);
         }
 
         public override string ToString()
         {
-            if (!isValid())
+            if (!IsValid())
             {
-                return string.Empty;
+                return NULL.ToString();
             }
-            return name;
+
+            return string.Format("{0}{1}{2}{3}{4}{5}", m_moduleName, MODULE_SEPARATOR,
+                           m_type.name, TYPE_SEPARATOR, m_assetName);
         }
 
-        public int CompareTo(AssetUri other)
+        public int CompareTo(IUri other)
         {
-            return string.Compare(normalisedName, other.toNormalisedString());
+            return string.Compare(this.ToNormalizedString(), other.ToNormalizedString());
+        }
+
+        public bool Equals(IUri obj)
+        {
+            if (obj != null && obj is AssetUri)
+                return this.Equals((AssetUri)obj);
+
+            return false;
         }
 
         public bool Equals(AssetUri uri)
         {
-            return this.normalisedName == uri.normalisedName;
+            if (this.IsValid() && uri.IsValid())
+                return this.m_hashCode == uri.m_hashCode;
+
+            return false;
         }
 
         public override int GetHashCode()
         {
-            return toNormalisedString().GetHashCode();
+            return m_hashCode;
         }
 
         public override bool Equals(object obj)
@@ -125,7 +142,7 @@ namespace COG.Assets
 
         public static implicit operator string(AssetUri uri)
         {
-            return uri.normalisedName;
+            return uri.ToString();
         }
 
         public static implicit operator AssetUri(string val)
@@ -133,21 +150,21 @@ namespace COG.Assets
             if (string.IsNullOrEmpty(val))
                 return AssetUri.NULL;
 
-            return new AssetUri(val);
+            return AssetUri.ParseUri(val);
         }
 
         public static bool operator ==(AssetUri a, AssetUri b)
         {
-            if (a.isValid() && b.isValid())
-                return a.normalisedName == b.normalisedName;
+            if (a.IsValid() && b.IsValid())
+                return a.m_hashCode == b.m_hashCode;
 
             return false;
         }
 
         public static bool operator !=(AssetUri a, AssetUri b)
         {
-            if (a.isValid() && b.isValid())
-                return a.normalisedName != b.normalisedName;
+            if (a.IsValid() && b.IsValid())
+                return a.m_hashCode != b.m_hashCode;
 
             return false;
         }

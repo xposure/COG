@@ -1,30 +1,31 @@
 ﻿using System.Collections.Generic;
 using System;
 using System.IO;
+using COG.Framework;
+using COG.Logging;
 
 namespace COG.Assets
 {
     public class AssetType
     {
-        //private static readonly Logger logger = Logger.getLogger(typeof(AssetType));
+        private static readonly Logger g_logger = Logger.getLogger(typeof(AssetType));
 
-        private static Dictionary<string, List<AssetType>> _subDirLookup = new Dictionary<string, List<AssetType>>();
-        private static Dictionary<string, AssetType> _nameLookup = new Dictionary<string, AssetType>();
+        private static int g_typeId;
 
-        public static readonly AssetType NULL = create<NullAssetData>("NULL", NullAssetDataLoader.NULL, null, null);
-        //public static readonly AssetType MATERIAL = create<MaterialData>("MATERIAL", new MaterialDataLoader(), new string[] { "materials" }, new string[] { "mat", "material" });
+        private static Dictionary<string, List<AssetType>> m_subDirLookup = new Dictionary<string, List<AssetType>>();
+        private static Dictionary<string, AssetType> m_nameLookup = new Dictionary<string, AssetType>();
 
-        private static int typeId;
+        public static readonly AssetType NULL = Create<NullAssetData>("NULL", NullAssetDataLoader.NULL, null, null);
 
-        public static bool getTypeFor(string dir, string extension, out AssetType type)
+        public static bool GetTypeFor(string dir, string extension, out AssetType type)
         {
             type = NULL;
-            var types = _subDirLookup.Find(dir);
+            var types = m_subDirLookup.Find(dir);
             if (types != null)
             {
                 foreach (var t in types)
                 {
-                    if (t.checkExt(extension))
+                    if (t.CheckExt(extension))
                     {
                         type = t;
                         return true;
@@ -35,19 +36,19 @@ namespace COG.Assets
             return false;
         }
 
-        public static AssetType find(string name)
+        public static AssetType Find(string name)
         {
             //Contract.RequiresNotNull(name, "name");
 
             var normalizedName = name.ToLower();
             AssetType at;
-            if (_nameLookup.TryGetValue(normalizedName, out at))
+            if (m_nameLookup.TryGetValue(normalizedName, out at))
                 return at;
 
             return NULL;
         }
 
-        public static AssetType create<T>(string name, IAssetDataLoader<T> loader, string[] folders, string[] exts)
+        public static AssetType Create<T>(string name, IAssetDataLoader<T> loader, string[] folders, string[] exts)
             where T : IAssetData
         {
             //Contract.RequiresNotNull(name, "name");
@@ -61,8 +62,8 @@ namespace COG.Assets
                 return data;
             });
 
-            var at = new AssetType(typeId++, name, loadWrapper, folders, exts);
-            _nameLookup.Add(normalizedName, at);
+            var at = new AssetType(g_typeId++, name, loadWrapper, folders, exts);
+            m_nameLookup.Add(normalizedName, at);
             return at;
         }
 
@@ -71,7 +72,6 @@ namespace COG.Assets
         private readonly Func<Stream, IAssetData> _loader;
         private readonly string[] _dirs;
         private readonly string[] _exts;
-
 
         private AssetType(int _id, string _name, Func<Stream, IAssetData> loader, string[] dirs, string[] exts)
         {
@@ -85,18 +85,18 @@ namespace COG.Assets
             {
                 foreach (var d in dirs)
                 {
-                    var sub = _subDirLookup.FindOrCreate(d);
+                    var sub = m_subDirLookup.FindOrCreate(d);
                     sub.Add(this);
                 }
             }
         }
 
-        public AssetUri getUri(string module, string item)
+        public AssetUri CreateUri(string module, string item)
         {
-            return new AssetUri(this, module, item);
+            return new AssetUri(module, this, item);
         }
 
-        public IAssetData build(IAssetEntry e)
+        public IAssetData Build(IAssetEntry e)
         {
             if (_loader == null)
                 return null;
@@ -105,7 +105,7 @@ namespace COG.Assets
                 return _loader(s);
         }
 
-        private bool checkExt(string ext)
+        private bool CheckExt(string ext)
         {
             if (_exts == null)
                 return false;

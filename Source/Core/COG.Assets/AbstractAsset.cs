@@ -16,7 +16,7 @@ namespace COG.Assets
         {
             m_uri = uri;
 
-            if (!uri.isValid())
+            if (!uri.IsValid())
                 return;
         }
 
