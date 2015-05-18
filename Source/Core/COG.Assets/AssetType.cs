@@ -58,7 +58,7 @@ namespace COG.Assets
 
             var loadWrapper = new Func<Stream, IAssetData>(s =>
             {
-                var data = loader.load(s);
+                var data = loader.Load(s);
                 return data;
             });
 

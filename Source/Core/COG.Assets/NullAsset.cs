@@ -27,7 +27,7 @@ namespace COG.Assets
     {
         public static readonly NullAssetDataLoader NULL = new NullAssetDataLoader();
 
-        public NullAssetData load(System.IO.Stream stream)
+        public NullAssetData Load(System.IO.Stream stream)
         {
             return NullAssetData.NULL;
         }

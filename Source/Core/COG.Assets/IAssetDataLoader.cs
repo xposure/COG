@@ -9,6 +9,6 @@ namespace COG.Assets
     public interface IAssetDataLoader<out T>
         where T: IAssetData
     {
-        T load(Stream stream);
+        T Load(Stream stream);
     }
 }

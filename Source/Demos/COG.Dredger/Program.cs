@@ -8,6 +8,7 @@ namespace COG.Dredger
         {
             Console.WriteLine("update");
             ProcessKeyboard();
+            ProcessMouse();
         }
 
         public override void Render(double dt)
@@ -20,6 +21,11 @@ namespace COG.Dredger
             var keyboard = OpenTK.Input.Keyboard.GetState();
             if (keyboard[OpenTK.Input.Key.Escape])
                 m_engine.Stop("User pressed escape from main menu");
+        }
+
+        private void ProcessMouse()
+        {
+            var mouse = OpenTK.Input.Mouse.GetState();
         }
     }
 
