@@ -9,7 +9,6 @@ using OpenTK.Graphics.OpenGL4;
 
 namespace COG.Graphics
 {
-
     #region TextureData
     public class TextureData : IAssetData
     {
