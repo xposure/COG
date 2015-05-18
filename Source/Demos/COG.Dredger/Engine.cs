@@ -11,8 +11,16 @@ namespace COG.Dredger
 {
     public abstract class GameState
     {
-        public abstract void Initialize(Engine engine);
-        public abstract void Unload();
+        protected Engine m_engine;
+
+        public virtual void LoadResources() { }
+        public virtual void UnloadResources() { }
+        public virtual void Exit() { }
+        public virtual void Initialize(Engine engine)
+        {
+            m_engine = engine;
+        }
+
         public abstract void Update(double dt);
         public abstract void Render(double dt);
     }
@@ -78,6 +86,11 @@ namespace COG.Dredger
             Shutdown();
         }
 
+        public void Stop(string message)
+        {
+            m_isRunning = false;
+        }
+
         public void PushState(GameState state)
         {
             m_pendingStateChanges.Add(() =>
@@ -91,14 +104,11 @@ namespace COG.Dredger
         {
             m_pendingStateChanges.Add(() =>
             {
-                while (m_states.Count > 0)
-                {
-                    var current = m_states.Pop();
-                    current.Unload();
-                }
-                
+                PurgeStates();
+
                 m_states.Push(state);
                 state.Initialize(this);
+                state.LoadResources();
             });
         }
 
@@ -107,8 +117,25 @@ namespace COG.Dredger
             m_pendingStateChanges.Add(() =>
             {
                 var state = m_states.Pop();
-                state.Unload();
+                state.Exit();
             });
+        }
+
+        private void PurgeStates()
+        {
+            if (m_states.Count > 0)
+            {
+                var current = m_states.Pop();
+                current.UnloadResources();
+                current.Exit();
+
+                while (m_states.Count > 0)
+                {
+                    current = m_states.Pop();
+                    //resources we're already unloaded
+                    current.Exit();
+                }
+            }
         }
 
         private void Update(double dt)
@@ -163,6 +190,7 @@ namespace COG.Dredger
 
             //setup config
             m_config = new Config();
+            m_config.Load();
             m_registry.Add(m_config.Module.CreateUri("config"), m_config);
 
             //add engine to the registry
@@ -179,7 +207,7 @@ namespace COG.Dredger
 
         private void InitializeDisplay()
         {
-            m_gameWindow = new GameWindow(1024, 768,
+            m_gameWindow = new GameWindow(m_config.WindowWidth, m_config.WindowHeight,
                     GraphicsMode.Default,
                     m_config.Module.Name,
                     GameWindowFlags.Default,
@@ -196,15 +224,10 @@ namespace COG.Dredger
 
         private void Shutdown()
         {
-            //uninit resources first
+            PurgeStates();
 
             m_gameWindow.Dispose();
             m_gameWindow = null;
-        }
-
-        private void ChangeState(GameState newState)
-        {
-
         }
 
         protected override void DisposeManaged()
