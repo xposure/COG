@@ -191,6 +191,8 @@ namespace COG.Framework
             if (m_isDisposed)
                 return;
 
+            m_isDisposed = true;
+
             if (disposing)
             {
                 DisposeManaged();
@@ -201,7 +203,6 @@ namespace COG.Framework
 
             DisposedUnmanaged();
 
-            m_isDisposed = true;
         }
 
         protected virtual void DisposeManaged() { }

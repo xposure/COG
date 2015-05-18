@@ -113,8 +113,13 @@ namespace COG.Framework
         public string ToNormalizedString()
         {
             if (!IsValid())
-                return NULL.ToNormalizedString();
+                return NULL.toNormalizedString();
 
+            return toNormalizedString();
+        }
+
+        private string toNormalizedString()
+        {
             var normalizedModuleName = UriUtil.normalise(m_module);
             var normalizedName = UriUtil.normalise(m_name);
 
@@ -124,8 +129,13 @@ namespace COG.Framework
         public override string ToString()
         {
             if (!IsValid())
-                return NULL.ToString();
+                return NULL.toString();
 
+            return toString();
+        }
+
+        private string toString()
+        {
             return string.Format("{0}{1}{2}", m_module, MODULE_SEPARATOR, m_name);
         }
 

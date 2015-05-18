@@ -4,39 +4,57 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{923AB1D5-796C-4156-9021-76F4E4F90CED}</ProjectGuid>
-    <OutputType>Library</OutputType>
+    <ProjectGuid>{5284957E-C430-42C1-91CF-021F9E973B0D}</ProjectGuid>
+    <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>COG.Logging</RootNamespace>
-    <AssemblyName>COG.Logging</AssemblyName>
+    <RootNamespace>COG.Dredger</RootNamespace>
+    <AssemblyName>COG.Dredger</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>..\..\..\Build\Libs\Debug\</OutputPath>
+    <OutputPath>..\..\..\Build\Demos\Debug\Dredger\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>..\..\..\Build\Libs\Release\</OutputPath>
+    <OutputPath>..\..\..\Build\Demos\Release\Dredger\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="OpenTK, Version=1.1.0.0, Culture=neutral, PublicKeyToken=bad199fe84eb3df4, processorArchitecture=MSIL" />
     <Reference Include="System" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ConsoleLogger.cs" />
-    <Compile Include="Logger.cs" />
+    <Compile Include="Config.cs" />
+    <Compile Include="Engine.cs" />
+    <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\Core\COG.Assets\COG.Assets.csproj">
+      <Project>{9eb6f9ca-480a-480b-ab53-454020a39d71}</Project>
+      <Name>COG.Assets</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Core\COG.Framework\COG.Framework.csproj">
+      <Project>{5a47c043-88a3-4fc3-bb14-d945bc742ae2}</Project>
+      <Name>COG.Framework</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Core\COG.Logging\COG.Logging.csproj">
+      <Project>{923ab1d5-796c-4156-9021-76f4e4f90ced}</Project>
+      <Name>COG.Logging</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

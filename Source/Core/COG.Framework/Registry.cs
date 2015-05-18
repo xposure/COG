@@ -10,7 +10,7 @@ namespace COG.Framework
         void SetRegistry(RegistryManager registry, SimpleUri uri);
     }
 
-    public class Registry : DisposableObject
+    public class Registry : DisposableObject, IRegistry
     {
         protected SimpleUri m_uri;
         protected RegistryManager m_registry;
