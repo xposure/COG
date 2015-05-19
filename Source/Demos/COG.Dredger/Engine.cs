@@ -68,28 +68,31 @@ namespace COG.Dredger
 
             var sw = Stopwatch.StartNew();
             var lastFrame = 0.0;
-            var skipped = false;
+            //var skipped = false;
             while (m_isRunning && !m_gameWindow.IsExiting)
             {
                 var current = sw.Elapsed.TotalSeconds;
                 var dt = current - lastFrame;
+                //if( dt < )
+                //dt = 1f / 60f;
 
                 Update(dt);
 
                 if (m_gameWindow.IsExiting)
                     break;
 
-                if (skipped || dt > 0.032)
-                {
+                //if (skipped || dt < 0.032)
+                //{
                     Render(dt);
-                    skipped = false;
-                }
-                else
-                {
-                    skipped = true;
-                }
+                //    skipped = false;
+                //}
+                //else
+                //{
+                //    skipped = true;
+                //}
 
                 lastFrame = current;
+                System.Threading.Thread.Sleep(1);
             }
 
             m_isRunning = false;
@@ -236,6 +239,7 @@ namespace COG.Dredger
                     3, 3,
                     GraphicsContextFlags.Default
                 );
+            m_gameWindow.VSync = VSyncMode.Off;
         }
 
         private void InitializeOpenTK()

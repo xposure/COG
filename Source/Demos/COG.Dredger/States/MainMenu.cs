@@ -3,14 +3,16 @@ using COG.Graphics;
 using OpenTK;
 using OpenTK.Graphics.OpenGL4;
 
-namespace COG.Dredger
+
+namespace COG.Dredger.States
 {
     public class MainMenu : GameState
     {
         private Texture2D m_texture;
         private Program m_program;
 
-        private int vertexArrayID, vertexBuffer, uvBuffer;
+        private int vertexArrayID;
+        private DynamicMesh m_mesh;
 
         public override void LoadResources()
         {
@@ -24,7 +26,7 @@ namespace COG.Dredger
 
             // Our vertices. Tree consecutive floats give a 3D vertex; Three consecutive vertices give a triangle.
             // A cube has 6 faces with 2 triangles each, so this makes 6*2=12 triangles, and 12*3 vertices
-            var g_vertex_buffer_data = new[] {
+            var g_all_buffer_data = new[] {
                     -1.0f,-1.0f,-1.0f, // triangle 1 : begin
                     -1.0f,-1.0f, 1.0f,
                     -1.0f, 1.0f, 1.0f, // triangle 1 : end
@@ -60,27 +62,8 @@ namespace COG.Dredger
                     -1.0f, 1.0f, 1.0f,
                     1.0f, 1.0f, 1.0f,
                     -1.0f, 1.0f, 1.0f,
-                    1.0f,-1.0f, 1.0f
-                };
-
-
-            // This will identify our vertex buffer
-            // Generate 1 buffer, put the resulting identifier in vertexbuffer
-           vertexBuffer = GL.GenBuffer();
-
-            // The following commands will talk about our 'vertexbuffer' buffer
-            GL.BindBuffer(BufferTarget.ArrayBuffer, vertexBuffer);
-
-            // Compute the size of our array
-            var vertexBufferSize = new IntPtr(sizeof(float) * g_vertex_buffer_data.Length);
-
-            // Give our vertices to OpenGL
-            GL.BufferData(BufferTarget.ArrayBuffer, vertexBufferSize, g_vertex_buffer_data,
-                            BufferUsageHint.StaticDraw);
-
-            // Two UV coordinatesfor each vertex. They were created with Blender. You'll learn shortly how to do this yourself.
-            var g_uv_buffer_data = new[] {
-                    0.000059f, 1.0f-0.000004f,
+                    1.0f,-1.0f, 1.0f,
+                    0.000059f, 1.0f-0.000004f,
                     0.000103f, 1.0f-0.336048f,
                     0.335973f, 1.0f-0.335903f,
                     1.000023f, 1.0f-0.000013f,
@@ -116,13 +99,30 @@ namespace COG.Dredger
                     0.667969f, 1.0f-0.671889f,
                     1.000004f, 1.0f-0.671847f,
                     0.667979f, 1.0f-0.335851f
+
                 };
 
-            uvBuffer = GL.GenBuffer();
-            GL.BindBuffer(BufferTarget.ArrayBuffer, uvBuffer);
+            var decl = new VertexDeclaration();
+            decl.AddElement(3, VertexAttribPointerType.Float, VertexElementSemantic.Position);
+            decl.AddElement(2, VertexAttribPointerType.Float, VertexElementSemantic.Texture);
 
-            var uvBufferSize = new IntPtr(sizeof(float) * g_uv_buffer_data.Length);
-            GL.BufferData(BufferTarget.ArrayBuffer, uvBufferSize, g_uv_buffer_data, BufferUsageHint.StaticDraw);
+            m_mesh = new DynamicMesh(decl);
+            m_mesh.Begin();
+            for (var i = 0; i < 36; i++)
+            {
+                var index = i * 5;
+                var vindex = i * 3;
+                var uindex = i * 2 + (12 * 3 * 3);
+
+                m_mesh.Position(g_all_buffer_data[vindex], g_all_buffer_data[vindex + 1], g_all_buffer_data[vindex + 2]);
+                m_mesh.TextureCoord(g_all_buffer_data[uindex], g_all_buffer_data[uindex + 1]);
+
+ 
+            }
+
+            m_mesh.End(BufferUsageHint.StaticDraw);
+
+        
 
 
             GL.ClearColor(1f, 1f, 1f, 1f);
@@ -132,6 +132,7 @@ namespace COG.Dredger
         {
             base.UnloadResources();
 
+            m_mesh.Dispose();
             m_texture.Dispose();
             m_program.Dispose();
         }
@@ -139,6 +140,10 @@ namespace COG.Dredger
         public override void Update(double dt)
         {
             rotation += dt;
+
+            if (rotation > System.Math.PI * 2)
+                rotation -= System.Math.PI * 2;
+
             ProcessKeyboard();
             ProcessMouse();
         }
@@ -146,6 +151,7 @@ namespace COG.Dredger
         private double rotation = 0;
         public override void Render(double dt)
         {
+
             // Enable depth test
             GL.Enable(EnableCap.DepthTest);
             // Accept fragment if it closer to the camera than the former one
@@ -182,35 +188,8 @@ namespace COG.Dredger
             m_program.Bind();
             m_texture.Bind();
 
-            GL.EnableVertexAttribArray(0);
-            GL.BindBuffer(BufferTarget.ArrayBuffer, vertexBuffer);
-            GL.VertexAttribPointer(
-                0,                             // attribute 0. No particular reason for 0, 
-                // but must match the layout in the shader.
-                3,                             // size
-                VertexAttribPointerType.Float, // type
-                false,                         // normalized?
-                0,                             // stride
-                0                              // array buffer offset
-            );
-
-
-            GL.EnableVertexAttribArray(1);
-            GL.BindBuffer(BufferTarget.ArrayBuffer, uvBuffer);
-            GL.VertexAttribPointer(
-                1,                              // attribute index
-                2,                              // size
-                VertexAttribPointerType.Float,  // type
-                false,                          // normalized?
-                0,                              // stride
-                0                               // offset
-            );
-
-            // Draw the triangle !
-            GL.DrawArrays(PrimitiveType.Triangles, 0, 12 * 3); // 12*3 indices starting at 0 -> 12 triangles -> 6 squares
-
-            GL.DisableVertexAttribArray(1);
-            GL.DisableVertexAttribArray(0);
+            m_mesh.Render();
+    
 
         }
 
@@ -227,16 +206,4 @@ namespace COG.Dredger
         }
     }
 
-    class App
-    {
-        [STAThread]
-        static void Main(string[] args)
-        {
-            //new ConsoleListener();
-            using (var engine = new Engine())
-            {
-                engine.Run(new MainMenu());
-            }
-        }
-    }
 }
