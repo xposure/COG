@@ -7,8 +7,9 @@ namespace COG.Assets
 {
     public abstract class AbstractSource : IAssetSource
     {
-        private readonly static Logger logger = Logger.getLogger(typeof(AbstractSource));
+        private readonly static Logger logger = Logger.GetLogger(typeof(AbstractSource));
 
+        private AssetManager m_assets;
         private Dictionary<AssetUri, IAssetEntry> m_entries = new Dictionary<AssetUri, IAssetEntry>();
         private Dictionary<int, List<IAssetEntry>> m_entryByTypes = new Dictionary<int, List<IAssetEntry>>();
 
@@ -17,8 +18,9 @@ namespace COG.Assets
             this.ID = id;
         }
 
-        public void Init()
+        public void Init(AssetManager assets)
         {
+            m_assets = assets;
             m_entries.Clear();
 
             foreach (var list in m_entryByTypes)
@@ -34,18 +36,21 @@ namespace COG.Assets
 
         protected void addEntry(IAssetEntry ae)
         {
-            if (m_entries.ContainsKey(ae.uri))
+            if (m_entries.ContainsKey(ae.Uri))
             {
-                logger.warn("{0} already existed", ae.uri);
+                logger.warn("{0} already existed", ae.Uri);
             }
 
-            m_entries[ae.uri] = ae;
+            m_entries[ae.Uri] = ae;
 
+            AssetType type;
+            m_assets.GetTypeFor(ae.Extension, out type);
+            
             List<IAssetEntry> byType;
-            if (!m_entryByTypes.TryGetValue(ae.uri.Type.id, out byType))
+            if (!m_entryByTypes.TryGetValue(type.id, out byType))
             {
                 byType = new List<IAssetEntry>();
-                m_entryByTypes.Add(ae.uri.Type.id, byType);
+                m_entryByTypes.Add(type.id, byType);
             }
 
             byType.Add(ae);
@@ -78,8 +83,9 @@ namespace COG.Assets
             return null;
         }
 
-        protected AssetUri getAssetUri(string relativePath)
+        protected AssetUri getAssetUri(string relativePath, out string extension)
         {
+            extension = string.Empty;
             relativePath = relativePath.ToLower();
             String[] parts = relativePath.Split(new char[] { '/' }, 2);
             if (parts.Length > 1)
@@ -93,9 +99,9 @@ namespace COG.Assets
                 if (extensionSeparator != -1)
                 {
                     var name = parts[1].Substring(0, extensionSeparator);
-                    var extension = parts[1].Substring(extensionSeparator + 1);
+                    extension = parts[1].Substring(extensionSeparator + 1);
                     AssetType assetType;
-                    if (AssetType.GetTypeFor(parts[0], extension, out assetType))
+                    if (m_assets.GetTypeFor(extension, out assetType))
                     {
                         return assetType.CreateUri(ID, name);
                     }

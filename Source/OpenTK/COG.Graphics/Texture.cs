@@ -11,23 +11,28 @@ namespace COG.Graphics
 {
 
     #region TextureData
-    public class TextureData : IAssetData
+    public class TextureData2D : IAssetData
     {
         private byte[] m_data;
+        private int m_width, m_height;
 
-        public byte[] PixelData { get { return m_data; } }
-
-        public TextureData(byte[] data)
+        public TextureData2D(byte[] data, int width, int height)
         {
             m_data = data;
+            m_width = width;
+            m_height = height;
         }
+
+        public byte[] PixelData { get { return m_data; } }
+        public int Width { get { return m_width; } }
+        public int Height { get { return m_height; } }
     }
     #endregion
 
     #region TextureBitmapLoader
-    public class TexturBitmapLoader : IAssetDataLoader<TextureData>
+    public class TexturBitmapLoader : IAssetDataLoader<TextureData2D>
     {
-        public TextureData Load(Stream fs)
+        public TextureData2D LoadData(Stream fs)
         {
             // Data read from the header of the BMP file
             var header = new byte[54]; // Each BMP file begins by a 54-bytes header
@@ -63,24 +68,22 @@ namespace COG.Graphics
             var data = new byte[imageSize];
             fs.Read(data, 0, imageSize);
 
-            return new TextureData(data);
+            return new TextureData2D(data, width, height);
+        }
+
+        public Texture2D Load(AssetUri uri, TextureData2D data)
+        {
+            return new Texture2D(uri, data);
         }
     }
     #endregion
 
-    public abstract class Texture : DisposableObject, IAsset<TextureData>
+    public abstract class Texture : DisposableObject
     {
         private static int g_lastBoundTextureID = 0;
 
-        private AssetUri m_uri;
         private int m_textureId;
         private List<KeyValuePair<TextureParameterName, int>> m_stateChanges;
-
-        protected Texture()
-        {
-        }
-
-        public AssetUri Uri { get { return m_uri; } }
 
         public bool IsValid { get { return m_textureId != 0; } }
 
@@ -99,24 +102,20 @@ namespace COG.Graphics
             ProcessTextureParams();
         }
 
-        public void Reload(TextureData data)
+        protected void GLSetupTexture()
         {
             if (m_textureId == 0)
                 m_textureId = GL.GenTexture();
 
-            if (!OnReload(data))
-                Unload();
         }
 
-        protected void Unload()
+        protected void Destroy()
         {
             if (m_textureId != 0)
                 GL.DeleteTexture(m_textureId);
 
             m_textureId = 0;
         }
-
-        protected abstract bool OnReload(TextureData data);
 
         private void ProcessTextureParams()
         {
@@ -150,14 +149,27 @@ namespace COG.Graphics
         {
             base.DisposedUnmanaged();
 
-            Unload();
+            Destroy();
         }
     }
 
-    public abstract class Texture2D : Texture
+    public class Texture2D : Texture, IAsset<TextureData2D>
     {
+        public static readonly AssetType TEXTURE = AssetType.Create("TEXTURE");
         private TextureMagFilter m_magFilter = TextureMagFilter.Nearest;
         private TextureMinFilter m_minFilter = TextureMinFilter.Nearest;
+        private AssetUri m_uri;
+        private int m_width, m_height;
+
+        public Texture2D(AssetUri uri, TextureData2D data)
+        {
+            m_uri = uri;
+
+            Reload(data);
+        }
+
+
+        public AssetUri Uri { get { return m_uri; } }
 
         public TextureMagFilter MagFilter
         {
@@ -179,12 +191,28 @@ namespace COG.Graphics
             }
         }
 
-        public abstract int Width { get; }
-        public abstract int Height { get; }
-
-        protected override bool OnReload(TextureData data)
+        public override TextureTarget TextureTarget
         {
-            throw new NotImplementedException();
+            get { return TextureTarget.Texture2D; }
         }
+
+        public int Width { get { return m_width; } }
+
+        public int Height { get { return m_height; } }
+
+        public void Reload(TextureData2D data)
+        {
+            m_width = data.Width;
+            m_height = data.Height;
+
+            GLSetupTexture();
+
+            GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgb, m_width, m_height, 0, PixelFormat.Rgb, PixelType.Byte, data.PixelData);
+
+            MagFilter = m_magFilter;
+            MinFilter = m_minFilter;
+
+        }
+
     }
 }

@@ -38,6 +38,7 @@
   <ItemGroup>
     <Compile Include="AbstractAsset.cs" />
     <Compile Include="AssetFactory.cs" />
+    <Compile Include="AssetLoader.cs" />
     <Compile Include="AssetManager.cs" />
     <Compile Include="AssetResolver.cs" />
     <Compile Include="AssetType.cs" />
@@ -53,6 +54,7 @@
     <Compile Include="Sources\AbstractSource.cs" />
     <Compile Include="Sources\DirectorySource.cs" />
     <Compile Include="Sources\NullSource.cs" />
+    <Compile Include="TextAsset.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\COG.Framework\COG.Framework.csproj">

@@ -10,21 +10,22 @@ namespace COG.Assets
 
         private int m_hashCode;
         private string m_moduleName, m_assetName;
-        private AssetType m_type;
+        private string m_type;
+        //private AssetType m_type;
 
-        public static readonly AssetUri NULL = new AssetUri("engine", AssetType.NULL, "<invalid>");
+        public static readonly AssetUri NULL = new AssetUri("engine", "null", "<invalid>");
 
         #region Constructors
-        public AssetUri(string moduleName, AssetType type, string assetName)
+        public AssetUri(string moduleName, string typeName, string assetName)
             : this()
         {
             Contract.RequiresNotEmpty(moduleName, "moduleName");
-            Contract.RequiresNotNull(type, "type");
+            Contract.RequiresNotEmpty(typeName, "typeName");
             Contract.RequiresNotEmpty(assetName, "objectName");
 
             m_hashCode = 0;
-            m_type = type;
             m_moduleName = moduleName;
+            m_type = typeName;
             m_assetName = assetName;
             
             ComputeHashCode();
@@ -33,7 +34,7 @@ namespace COG.Assets
 
         #region Properties
 
-        public AssetType Type { get { return m_type; } }
+        public string  Type { get { return m_type; } }
 
         public string Module { get { return m_moduleName; } }
 
@@ -45,7 +46,7 @@ namespace COG.Assets
 
         private void ComputeHashCode()
         {
-            if (string.IsNullOrEmpty(m_moduleName) || string.IsNullOrEmpty(m_assetName) || m_type == null)
+            if (string.IsNullOrEmpty(m_moduleName) || string.IsNullOrEmpty(m_assetName) || string.IsNullOrEmpty(m_type))
             {
                 m_hashCode = 0;
             }
@@ -53,8 +54,9 @@ namespace COG.Assets
             {
                 var normalizedModuleName = UriUtil.normalise(m_moduleName);
                 var normalizedAssetName = UriUtil.normalise(m_assetName);
+                var normalizedTypeName = UriUtil.normalise(m_type);
 
-                m_hashCode = normalizedModuleName.GetHashCode() ^ m_type.GetHashCode() ^ normalizedAssetName.GetHashCode();
+                m_hashCode = normalizedModuleName.GetHashCode() ^ normalizedTypeName.GetHashCode() ^ normalizedAssetName.GetHashCode();
             }
         }
 
@@ -68,9 +70,9 @@ namespace COG.Assets
             string[] split = uri.Split(MODULE_SEPARATOR);
             if (split.Length == 3)
             {
-                var type = AssetType.Find(split[1]);
-                if (type != null)
-                    return new AssetUri(split[0], type, split[2]);
+                //var type = AssetType.Find(split[1]);
+                //if (type != null)
+                    return new AssetUri(split[0], split[1], split[2]);
             }
 
             return NULL;
@@ -84,10 +86,10 @@ namespace COG.Assets
             }
 
             var normalizedModuleName = UriUtil.normalise(m_moduleName);
-            var normalizedTypeName = UriUtil.normalise(m_type.name);
+            var normalizedTypeName = UriUtil.normalise(m_type);
             var normalizedAssetName = UriUtil.normalise(m_assetName);
 
-            return string.Format("{0}{1}{2}{3}{4}{5}", normalizedModuleName, MODULE_SEPARATOR,
+            return string.Format("{0}{1}{2}{3}{4}", normalizedModuleName, MODULE_SEPARATOR,
                 normalizedTypeName, TYPE_SEPARATOR, normalizedAssetName);
         }
 
@@ -98,8 +100,8 @@ namespace COG.Assets
                 return NULL.ToString();
             }
 
-            return string.Format("{0}{1}{2}{3}{4}{5}", m_moduleName, MODULE_SEPARATOR,
-                           m_type.name, TYPE_SEPARATOR, m_assetName);
+            return string.Format("{0}{1}{2}{3}{4}", m_moduleName, MODULE_SEPARATOR,
+                           m_type, TYPE_SEPARATOR, m_assetName);
         }
 
         public int CompareTo(IUri other)

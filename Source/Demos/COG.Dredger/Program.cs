@@ -1,9 +1,30 @@
 ﻿using System;
+using COG.Graphics;
 
 namespace COG.Dredger
 {
     public class MainMenu : GameState
     {
+        private Texture2D m_texture;
+        private Program m_program;
+
+        private int vertexArrayID, vertexBuffer, uvBuffer, textureID;
+
+        public override void LoadResources()
+        {
+            base.LoadResources();
+            m_texture = m_engine.Assets.LoadAsset<Texture2D, TextureData2D>("dredger:texture:uvtemplate");
+            m_program = m_engine.Assets.LoadAsset<Program, ProgramData>("dredger:program:simple");
+        }
+
+        public override void UnloadResources()
+        {
+            base.UnloadResources();
+
+            m_texture.Dispose();
+            m_program.Dispose();
+        }
+
         public override void Update(double dt)
         {
             Console.WriteLine("update");
@@ -29,7 +50,7 @@ namespace COG.Dredger
         }
     }
 
-    class Program
+    class App
     {
         [STAThread]
         static void Main(string[] args)

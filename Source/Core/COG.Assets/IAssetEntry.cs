@@ -7,7 +7,8 @@ namespace COG.Assets
 {
     public interface IAssetEntry
     {
-        AssetUri uri { get; }
-        Stream getReadStream();
+        string Extension { get; }
+        AssetUri Uri { get; }
+        Stream GetReadStream();
     }
 }

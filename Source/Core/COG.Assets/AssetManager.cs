@@ -8,17 +8,74 @@ namespace COG.Assets
 {
     public class AssetManager : Registry
     {
-        private static readonly Logger g_logger = Logger.getLogger(typeof(AssetManager));
+        private readonly Logger m_logger = Logger.GetLogger(typeof(AssetManager));
 
         private Dictionary<string, IAssetSource> m_sources = new Dictionary<string, IAssetSource>();
-        private Dictionary<int, AssetFactory<IAssetData, IAsset>> m_factories = new Dictionary<int, AssetFactory<IAssetData, IAsset>>();
-        private Dictionary<int, List<AssetResolver<IAssetData>>> m_resolvers = new Dictionary<int, List<AssetResolver<IAssetData>>>();
+        private Dictionary<string, AssetFactory<IAssetData, IAsset>> m_factories = new Dictionary<string, AssetFactory<IAssetData, IAsset>>();
+        private Dictionary<string, List<AssetResolver<IAssetData>>> m_resolvers = new Dictionary<string, List<AssetResolver<IAssetData>>>();
         private Dictionary<AssetUri, IAsset> m_assetCache = new Dictionary<AssetUri, IAsset>();
+
+        private Dictionary<string, AssetLoader> m_assetLoaders = new Dictionary<string, AssetLoader>();
+        private Dictionary<string, AssetType> m_nameLookup = new Dictionary<string, AssetType>();
+
+        //private Dictionary<string, List<AssetType>> m_subDirLookup = new Dictionary<string, List<AssetType>>();
 
         public void AddAssetSource(IAssetSource source)
         {
             m_sources.Add(source.ID, source);
-            source.Init();
+            source.Init(this);
+        }
+
+        public void RegisterTypeExtension<T>(AssetType type, string extension, IAssetDataLoader<T> loader)
+            where T : IAssetData
+        {
+            var loadWrapper =
+
+            extension = extension.ToLower();
+
+            var assetLoader = m_assetLoaders.Find(extension);
+            if (assetLoader == null)
+            {
+                assetLoader = new AssetLoader(type, new Func<Stream, IAssetData>(
+                    s =>
+                    {
+                        var data = loader.LoadData(s);
+                        return data;
+                    })
+                );
+
+                m_assetLoaders.Add(extension, assetLoader);
+                m_nameLookup.Add(type.name.ToLower(), type);
+            }
+        }
+
+        //public void RegisterTypeDirectory(AssetType type, string directory)
+        //{
+
+        //}
+
+        internal bool GetTypeFor(string extension, out AssetType type)
+        {
+            type = AssetType.NULL;
+
+            var assetLoader = m_assetLoaders.Find(extension);
+            //var types = m_subDirLookup.Find(dir);
+            //if (types != null)
+            if(assetLoader != null)
+            {
+                type = assetLoader.Type;
+                return true;
+                //foreach (var t in types)
+                //{
+                //    if (t.CheckExt(extension))
+                //    {
+                //        type = t;
+                //        return true;
+                //    }
+                //}
+            }
+
+            return false;
         }
 
         public IAssetEntry FindAsset(AssetUri uri)
@@ -37,7 +94,7 @@ namespace COG.Assets
         {
             if (uri.IsValid())
             {
-                List<AssetResolver<IAssetData>> resolvers = m_resolvers.Find(uri.Type.id);
+                List<AssetResolver<IAssetData>> resolvers = m_resolvers.Find(uri.Type.ToLower());
                 if (resolvers != null)
                 {
                     foreach (var resolver in resolvers)
@@ -55,11 +112,11 @@ namespace COG.Assets
         public void AddResolver<DATA>(AssetType type, Func<AssetUri, DATA> resolver)
             where DATA : IAssetData
         {
-            var resolvers = m_resolvers.Find(type.id);
-            if(resolvers == null)
+            var resolvers = m_resolvers.Find(type.name.ToLower());
+            if (resolvers == null)
             {
                 resolvers = new List<AssetResolver<IAssetData>>();
-                m_resolvers.Add(type.id, resolvers);
+                m_resolvers.Add(type.name.ToLower(), resolvers);
             }
 
             resolvers.Add(new AssetResolver<IAssetData>((uri) =>
@@ -72,7 +129,7 @@ namespace COG.Assets
             where DATA : IAssetData
             where ASSET : IAsset<DATA>
         {
-            m_factories.Add(type.id, new AssetFactory<IAssetData, IAsset>((uri, data) =>
+            m_factories.Add(type.nameNormalized, new AssetFactory<IAssetData, IAsset>((uri, data) =>
             {
                 return factory(uri, (DATA)data);
                 //return (IAsset<IAssetData>)r;
@@ -92,11 +149,16 @@ namespace COG.Assets
             var assetEntry = FindAsset(uri);
             if (assetEntry == null)
             {
-                g_logger.warn("Unable to resolve asset: {0}", uri);
+                m_logger.warn("Unable to resolve asset: {0}", uri);
                 return default(U);
             }
 
-            return (U)uri.Type.Build(assetEntry);
+            var assetLoader = m_assetLoaders.Find(assetEntry.Extension);
+            if (assetLoader == null)
+                return default(U);
+
+            using (var stream = assetEntry.GetReadStream())
+                return (U)assetLoader.Loader(stream);
         }
 
         public T LoadAsset<T, U>(AssetUri uri)
@@ -105,7 +167,7 @@ namespace COG.Assets
         {
             if (!uri.IsValid())
             {
-                g_logger.warn("Invalid asset uri: {0}", uri);
+                m_logger.warn("Invalid asset uri: {0}", uri);
                 return default(T);
             }
 
@@ -114,26 +176,26 @@ namespace COG.Assets
                 return (T)asset;
 
             AssetFactory<IAssetData, IAsset> factory;
-            if (!m_factories.TryGetValue(uri.Type.id, out factory))
+            if (!m_factories.TryGetValue(uri.Type.ToLower(), out factory))
             {
-                g_logger.warn("Unsupported asset type: {0}", uri.Type);
+                m_logger.warn("Unsupported asset type: {0}", uri.Type);
                 return default(T);
             }
 
-            var data = LoadAssetData<U>(uri);
+            var data = LoadAssetData<U>( uri);
             if (data == null)
                 return default(T);
 
             asset = factory(uri, data);
             if (asset == null)
             {
-                g_logger.error("factory '{0}' returned null", typeof(T));
+                m_logger.error("factory '{0}' returned null", typeof(T));
                 return default(T);
             }
 
             if (!(asset is T))
             {
-                g_logger.error("factory returned a type '{0} 'that wasn't of '{1}'", asset.GetType(), typeof(T));
+                m_logger.error("factory returned a type '{0} 'that wasn't of '{1}'", asset.GetType(), typeof(T));
                 return default(T);
             }
 
@@ -147,14 +209,15 @@ namespace COG.Assets
         {
             if (!uri.IsValid())
             {
-                g_logger.warn("Invalid asset uri: {0}", uri);
+                m_logger.warn("Invalid asset uri: {0}", uri);
                 return default(T);
             }
 
+            var type = m_nameLookup.Find(uri.Type.ToLower());
             AssetFactory<IAssetData, IAsset> factory;
-            if (!m_factories.TryGetValue(uri.Type.id, out factory))
+            if (!m_factories.TryGetValue(type.nameNormalized, out factory))
             {
-                g_logger.warn("Unsupported asset type: {0}", uri.Type);
+                m_logger.warn("Unsupported asset type: {0}", uri.Type);
                 return default(T);
             }
 
@@ -165,7 +228,7 @@ namespace COG.Assets
 
             if (t != null)
             {
-                g_logger.error("factory returned a type '{0} 'that wasn't of T", t.GetType());
+                m_logger.error("factory returned a type '{0} 'that wasn't of T", t.GetType());
             }
 
             return default(T);
@@ -177,7 +240,7 @@ namespace COG.Assets
             var uri = asset.Uri;
             if (!uri.IsValid())
             {
-                g_logger.warn("Invalid asset uri: {0}", uri);
+                m_logger.warn("Invalid asset uri: {0}", uri);
                 return default(T);
             }
 
@@ -185,6 +248,15 @@ namespace COG.Assets
             return asset;
         }
 
+        protected override void DisposeManaged()
+        {
+            base.DisposeManaged();
+
+            foreach (var asset in m_assetCache.Values)
+                asset.Dispose();
+
+            m_assetCache.Clear();
+        }
         //public void reload()
         //{
         //    //TODO: throw new NotImplementedException();
@@ -192,10 +264,10 @@ namespace COG.Assets
 
         //}
 
-        public void Clear()
-        {
-            m_assetCache.Clear();
-        }
+    //    public void Clear()
+    //    {
+    //        m_assetCache.Clear();
+    //    }
     }
 
 }

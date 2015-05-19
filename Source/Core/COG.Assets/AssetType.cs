@@ -8,114 +8,106 @@ namespace COG.Assets
 {
     public class AssetType
     {
-        private static readonly Logger g_logger = Logger.getLogger(typeof(AssetType));
+        //private static readonly Logger g_logger = Logger.GetLogger(typeof(AssetType));
 
         private static int g_typeId;
 
-        private static Dictionary<string, List<AssetType>> m_subDirLookup = new Dictionary<string, List<AssetType>>();
-        private static Dictionary<string, AssetType> m_nameLookup = new Dictionary<string, AssetType>();
+        //private static Dictionary<string, List<AssetType>> m_subDirLookup = new Dictionary<string, List<AssetType>>();
+        //private static Dictionary<string, AssetType> m_nameLookup = new Dictionary<string, AssetType>();
 
-        public static readonly AssetType NULL = Create<NullAssetData>("NULL", NullAssetDataLoader.NULL, null, null);
+        public static readonly AssetType NULL = Create("NULL");
 
-        public static bool GetTypeFor(string dir, string extension, out AssetType type)
+        //public static bool GetTypeFor(string dir, string extension, out AssetType type)
+        //{
+        //    type = NULL;
+        //    var types = m_subDirLookup.Find(dir);
+        //    if (types != null)
+        //    {
+        //        foreach (var t in types)
+        //        {
+        //            if (t.CheckExt(extension))
+        //            {
+        //                type = t;
+        //                return true;
+        //            }
+        //        }
+        //    }
+
+        //    return false;
+        //}
+
+        //public static AssetType Find(string name)
+        //{
+        //    //Contract.RequiresNotNull(name, "name");
+
+        //    var normalizedName = name.ToLower();
+        //    AssetType at;
+        //    if (m_nameLookup.TryGetValue(normalizedName, out at))
+        //        return at;
+
+        //    return NULL;
+        //}
+
+        public static AssetType Create(string name)
         {
-            type = NULL;
-            var types = m_subDirLookup.Find(dir);
-            if (types != null)
-            {
-                foreach (var t in types)
-                {
-                    if (t.CheckExt(extension))
-                    {
-                        type = t;
-                        return true;
-                    }
-                }
-            }
-
-            return false;
-        }
-
-        public static AssetType Find(string name)
-        {
-            //Contract.RequiresNotNull(name, "name");
-
             var normalizedName = name.ToLower();
-            AssetType at;
-            if (m_nameLookup.TryGetValue(normalizedName, out at))
-                return at;
 
-            return NULL;
-        }
-
-        public static AssetType Create<T>(string name, IAssetDataLoader<T> loader, string[] folders, string[] exts)
-            where T : IAssetData
-        {
-            //Contract.RequiresNotNull(name, "name");
-
-            var normalizedName = name.ToLower();
-            //Contract.Requires(!_nameLookup.ContainsKey(normalizedName), "name", "The asset type was already registered");
-
-            var loadWrapper = new Func<Stream, IAssetData>(s =>
-            {
-                var data = loader.Load(s);
-                return data;
-            });
-
-            var at = new AssetType(g_typeId++, name, loadWrapper, folders, exts);
-            m_nameLookup.Add(normalizedName, at);
+            var at = new AssetType(g_typeId++, name);//, folders, exts);
+           // m_nameLookup.Add(normalizedName, at);
             return at;
         }
 
         public readonly int id;
         public readonly string name;
-        private readonly Func<Stream, IAssetData> _loader;
-        private readonly string[] _dirs;
-        private readonly string[] _exts;
+        public readonly string nameNormalized;
+        //private readonly Func<Stream, IAssetData> _loader;
+        //private readonly string[] _dirs;
+        //private readonly string[] _exts;
 
-        private AssetType(int _id, string _name, Func<Stream, IAssetData> loader, string[] dirs, string[] exts)
+        private AssetType(int _id, string _name/*, Func<Stream, IAssetData> loader,  string[] dirs, string[] exts*/)
         {
             id = _id;
             name = _name;
-            _loader = loader;
-            _dirs = dirs;
-            _exts = exts;
+            nameNormalized = name.ToLower();
+            //_loader = loader;
+            //_dirs = dirs;
+            //_exts = exts;
 
-            if (dirs != null && exts != null)
-            {
-                foreach (var d in dirs)
-                {
-                    var sub = m_subDirLookup.FindOrCreate(d);
-                    sub.Add(this);
-                }
-            }
+            //if (dirs != null && exts != null)
+            //{
+            //    foreach (var d in dirs)
+            //    {
+            //        var sub = m_subDirLookup.FindOrCreate(d);
+            //        sub.Add(this);
+            //    }
+            //}
         }
 
         public AssetUri CreateUri(string module, string item)
         {
-            return new AssetUri(module, this, item);
+            return new AssetUri(module, name, item);
         }
 
-        public IAssetData Build(IAssetEntry e)
-        {
-            if (_loader == null)
-                return null;
+        //public IAssetData Build(IAssetEntry e)
+        //{
+        //    if (_loader == null)
+        //        return null;
 
-            using (var s = e.getReadStream())
-                return _loader(s);
-        }
+        //    using (var s = e.getReadStream())
+        //        return _loader(s);
+        //}
 
-        private bool CheckExt(string ext)
-        {
-            if (_exts == null)
-                return false;
+        //public bool CheckExt(string ext)
+        //{
+        //    if (_exts == null)
+        //        return false;
 
-            foreach (var e in _exts)
-                if (e == ext)
-                    return true;
+        //    foreach (var e in _exts)
+        //        if (e == ext)
+        //            return true;
 
-            return false;
-        }
+        //    return false;
+        //}
 
         public override bool Equals(object obj)
         {
@@ -137,12 +129,13 @@ namespace COG.Assets
 
         public static bool operator ==(AssetType a, AssetType b)
         {
-            return a.id == b.id;
+            return System.Object.ReferenceEquals(a, b);
         }
 
         public static bool operator !=(AssetType a, AssetType b)
         {
-            return a.id != b.id;
+
+            return !(a == b);
         }
 
         public override string ToString()

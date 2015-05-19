@@ -59,7 +59,7 @@ namespace COG.Logging
         protected abstract void log(string module, string type, string message);
         #endregion Methods
 
-        public static Logger getLogger(Type type)
+        public static Logger GetLogger(Type type)
         {
             return new LogWrapper(type);
         }

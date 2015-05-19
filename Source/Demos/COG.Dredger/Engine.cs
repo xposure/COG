@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using COG.Assets;
 using COG.Framework;
+using COG.Graphics;
 using OpenTK;
 using OpenTK.Graphics;
 
@@ -32,12 +34,14 @@ namespace COG.Dredger
     {
         private Config m_config;
         private GameWindow m_gameWindow;
+        private AssetManager m_assets;
         private Stack<GameState> m_states;
         private List<Action> m_pendingStateChanges;
 
         private bool m_isRunning = false;
 
         public bool IsRunning { get { return m_isRunning; } }
+        public AssetManager Assets { get { return m_assets; } }
         public RegistryManager Registry { get { return m_registry; } }
         public GameWindow GameWindow { get { return m_gameWindow; } }
         public GameState CurrentState
@@ -60,6 +64,7 @@ namespace COG.Dredger
             m_gameWindow.Visible = true;
 
             ProcessStateChanges();
+
 
             var sw = Stopwatch.StartNew();
             var lastFrame = 0.0;
@@ -202,7 +207,34 @@ namespace COG.Dredger
             //add engine to the registry
             m_registry.Add(m_config.Module.CreateUri("engine"), this);
 
+            InitializeManagers();
+
             InitializeRenderer();
+        }
+
+        private void InitializeManagers()
+        {
+            m_assets = new AssetManager();
+            m_assets.RegisterTypeExtension(Texture2D.TEXTURE, "bmp", new TexturBitmapLoader());
+            m_assets.RegisterTypeExtension(VertexShader.VERTEX, "vert", new TextDataLoader());
+            m_assets.RegisterTypeExtension(FragmentShader.FRAGMENT, "frag", new TextDataLoader());
+
+            m_assets.AddResolver<ProgramData>(Program.PROGRAM, new Func<AssetUri, ProgramData>(uri =>
+            {
+                using(var vertexShader = m_assets.LoadAsset<VertexShader, TextData>(VertexShader.VERTEX.CreateUri(m_config.Module.Name, uri.Name)))
+                using (var fragmentShader = m_assets.LoadAsset<FragmentShader, TextData>(FragmentShader.FRAGMENT.CreateUri(m_config.Module.Name, uri.Name)))
+                {
+                    return new ProgramData(vertexShader, fragmentShader);
+                }
+            }));
+
+            m_assets.SetFactory(Texture2D.TEXTURE, new Func<AssetUri, TextureData2D, Texture2D>((uri, data) => { return new Texture2D(uri, data); }));
+            m_assets.SetFactory(Program.PROGRAM, new Func<AssetUri, ProgramData, Program>((uri, data) => { return new Program(uri, data); }));
+            m_assets.SetFactory(VertexShader.VERTEX, new Func<AssetUri, TextData, VertexShader>((uri, data) => { return new VertexShader(uri, data);}));
+            m_assets.SetFactory(FragmentShader.FRAGMENT, new Func<AssetUri, TextData, FragmentShader>((uri, data) => { return new FragmentShader(uri, data);}));
+
+            m_assets.AddAssetSource(new DirectorySource(m_config.Module.Name, "content"));
+
         }
 
         private void InitializeRenderer()

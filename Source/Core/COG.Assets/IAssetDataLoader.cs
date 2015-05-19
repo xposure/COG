@@ -6,9 +6,10 @@ using System.Text;
 
 namespace COG.Assets
 {
-    public interface IAssetDataLoader<out T>
-        where T: IAssetData
+    public interface IAssetDataLoader<out DATA>
+        where DATA : IAssetData
     {
-        T Load(Stream stream);
+        DATA LoadData(Stream stream);
+
     }
 }

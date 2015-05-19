@@ -7,7 +7,7 @@ namespace COG.Assets
     public interface IAssetSource 
     {
         string ID { get; }
-        void Init();
+        void Init(AssetManager assets);
         IEnumerable<IAssetEntry> List();
         IEnumerable<IAssetEntry> List(AssetType type);
         IAssetEntry Find(AssetUri uri);

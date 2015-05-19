@@ -11,25 +11,27 @@ namespace COG.Assets
     {
         private class FileEntry : IAssetEntry
         {
-            private string _path;
-            private AssetUri _uri;
+            private string m_path;
+            private string m_extension;
+            private AssetUri m_uri;
 
-            public AssetUri uri { get { return _uri; } }
+            public string Extension { get { return m_extension; } }
+            public AssetUri Uri { get { return m_uri; } }
 
-            public FileEntry(AssetUri uri, string fullpath)
+            public FileEntry(AssetUri uri, string fullpath, string extension)
             {
-                _uri = uri;
-                _path = fullpath;
+                m_uri = uri;
+                m_path = fullpath;
+                m_extension = extension;
             }
 
-            public Stream getReadStream()
+            public Stream GetReadStream()
             {
-                //return TitleContainer.OpenStream("..\\content\\" + _path);
-                return new FileStream(_path, FileMode.Open, FileAccess.Read, FileShare.Read);
+                return new FileStream(m_path, FileMode.Open, FileAccess.Read, FileShare.Read);
             }
         }
 
-        private static readonly Logger logger = Logger.getLogger(typeof(DirectorySource));
+        private static readonly Logger g_logger = Logger.GetLogger(typeof(DirectorySource));
 
         private string _directory;
 
@@ -46,7 +48,7 @@ namespace COG.Assets
         {
             if (!System.IO.Directory.Exists(_directory))
             {
-                logger.error("Directory not found '{0}'", _directory);
+                g_logger.error("Directory not found '{0}'", _directory);
                 return;
             }
 
@@ -59,15 +61,16 @@ namespace COG.Assets
                 var files = System.IO.Directory.GetFiles(currentDir);
                 foreach (var file in files)
                 {
+                    string extension;
                     var relFile = file.Substring(_directory.Length + 1).Replace("\\", "/");
-                    var uri = getAssetUri(relFile);
+                    var uri = getAssetUri(relFile, out extension);
                     if (!uri.IsValid())
                     {
-                        logger.error("Could not get a valid uri for '{0}'", relFile);
+                        g_logger.error("Could not get a valid uri for '{0}'", relFile);
                         continue;
                     }
 
-                    var ae = new FileEntry(uri, file);
+                    var ae = new FileEntry(uri, file, extension);
                     addEntry(ae);
                 }
 
