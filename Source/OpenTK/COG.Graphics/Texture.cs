@@ -97,7 +97,10 @@ namespace COG.Graphics
                 return;
 
             if (g_lastBoundTextureID != m_textureId)
+            {
                 GL.BindTexture(TextureTarget, m_textureId);
+                g_lastBoundTextureID = m_textureId;
+            }
 
             ProcessTextureParams();
         }
@@ -106,6 +109,8 @@ namespace COG.Graphics
         {
             if (m_textureId == 0)
                 m_textureId = GL.GenTexture();
+
+            Bind();
 
         }
 
@@ -117,7 +122,7 @@ namespace COG.Graphics
             m_textureId = 0;
         }
 
-        private void ProcessTextureParams()
+        protected void ProcessTextureParams()
         {
             if (m_stateChanges != null && m_stateChanges.Count > 0)
             {
@@ -207,10 +212,12 @@ namespace COG.Graphics
 
             GLSetupTexture();
 
-            GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgb, m_width, m_height, 0, PixelFormat.Rgb, PixelType.Byte, data.PixelData);
+            GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgb, m_width, m_height, 0, PixelFormat.Rgb, PixelType.UnsignedByte, data.PixelData);
 
             MagFilter = m_magFilter;
             MinFilter = m_minFilter;
+
+            ProcessTextureParams(); 
 
         }
 

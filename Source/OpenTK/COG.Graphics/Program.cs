@@ -90,7 +90,7 @@ namespace COG.Graphics
         }
     }
 
-    public class ProgramData : IAssetData
+    public class ProgramData : DisposableObject, IAssetData
     {
         private Shader[] m_shaders;
 
@@ -101,12 +101,26 @@ namespace COG.Graphics
 
         public Shader[] Shaders { get { return m_shaders; } }
 
+        protected override void DisposedUnmanaged()
+        {
+            base.DisposedUnmanaged();
+
+            if (m_shaders != null)
+            {
+                foreach (var shader in m_shaders)
+                    shader.Dispose();
+
+                m_shaders = null;
+            }
+        }
     }
 
     public class Program : DisposableObject, IAsset<ProgramData>
     {
-        private static readonly Logger g_logger = Logger.GetLogger(typeof(Program));
         public static readonly AssetType PROGRAM = AssetType.Create("PROGRAM");
+
+        private static readonly Logger g_logger = Logger.GetLogger(typeof(Program));
+        private static int g_lastProgramBound;
 
         private int m_programID;
         private AssetUri m_uri;
@@ -117,7 +131,27 @@ namespace COG.Graphics
             Reload(data);
         }
 
+        public int ProgramID { get { return m_programID; } }
         public AssetUri Uri { get { return m_uri; } }
+        public bool IsValid { get { return m_programID != 0; } }
+        public void Bind()
+        {
+            if (!IsValid)
+                return;
+
+            if (g_lastProgramBound != m_programID)
+            {
+                GL.UseProgram(m_programID);
+                g_lastProgramBound = m_programID;
+            }
+
+            UpdateParams();
+        }
+
+        private void UpdateParams()
+        {
+            
+        }
 
         public void Reload(ProgramData t)
         {
