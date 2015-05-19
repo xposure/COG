@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Text;
 
 namespace COG.Assets
@@ -21,16 +22,20 @@ namespace COG.Assets
         {
         }
 
-    }
-
-    public class NullAssetDataLoader : IAssetDataLoader<NullAssetData>
-    {
-        public static readonly NullAssetDataLoader NULL = new NullAssetDataLoader();
-
-        public NullAssetData LoadData(System.IO.Stream stream)
+        public static NullAssetData LoadData(Stream stream)
         {
             return NullAssetData.NULL;
         }
-
     }
+
+    //public class NullAssetDataLoader : IAssetDataLoader<NullAssetData>
+    //{
+    //    public static readonly NullAssetDataLoader NULL = new NullAssetDataLoader();
+
+    //    public NullAssetData LoadData(System.IO.Stream stream)
+    //    {
+    //        return NullAssetData.NULL;
+    //    }
+
+    //}
 }

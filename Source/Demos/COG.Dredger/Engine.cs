@@ -215,30 +215,9 @@ namespace COG.Dredger
         private void InitializeManagers()
         {
             m_assets = new AssetManager();
-            m_assets.RegisterTypeExtension(Texture2D.TEXTURE, "bmp", new TexturBitmapLoader());
-            m_assets.RegisterTypeExtension(VertexShader.VERTEX, "vert", new TextDataLoader());
-            m_assets.RegisterTypeExtension(FragmentShader.FRAGMENT, "frag", new TextDataLoader());
-
-            m_assets.AddResolver<ProgramData>(Program.PROGRAM, new Func<AssetUri, ProgramData>(uri =>
-            {
-                var vertexShader = m_assets.LoadAsset<VertexShader, TextData>(VertexShader.VERTEX.CreateUri(m_config.Module.Name, uri.Name));
-                var fragmentShader = m_assets.LoadAsset<FragmentShader, TextData>(FragmentShader.FRAGMENT.CreateUri(m_config.Module.Name, uri.Name));
-
-                return new ProgramData(vertexShader, fragmentShader);
-            }));
-
-            m_assets.SetFactory(Texture2D.TEXTURE, new Func<AssetUri, TextureData2D, Texture2D>((uri, data) => { return new Texture2D(uri, data); }));
-            m_assets.SetFactory(Program.PROGRAM, new Func<AssetUri, ProgramData, Program>((uri, data) => {
-                using (data)
-                {
-                    return new Program(uri, data);
-                }
-            }));
-            m_assets.SetFactory(VertexShader.VERTEX, new Func<AssetUri, TextData, VertexShader>((uri, data) => { return new VertexShader(uri, data); }));
-            m_assets.SetFactory(FragmentShader.FRAGMENT, new Func<AssetUri, TextData, FragmentShader>((uri, data) => { return new FragmentShader(uri, data); }));
-
+            m_assets.InitializeGraphics(m_config.Module.Name);
+          
             m_assets.AddAssetSource(new DirectorySource(m_config.Module.Name, "content"));
-
         }
 
         private void InitializeRenderer()

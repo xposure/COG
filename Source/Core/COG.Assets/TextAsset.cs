@@ -16,15 +16,13 @@ namespace COG.Assets
         }
 
         public string Content { get { return m_content; } }
-    }
 
-    public class TextDataLoader : IAssetDataLoader<TextData>
-    {
-        public TextData LoadData(Stream stream)
+        public static TextData LoadData(Stream stream)
         {
             var sr = new StreamReader(stream);
             return new TextData(sr.ReadToEnd());
         }
-
     }
+
+
 }

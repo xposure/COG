@@ -26,13 +26,8 @@ namespace COG.Graphics
         public byte[] PixelData { get { return m_data; } }
         public int Width { get { return m_width; } }
         public int Height { get { return m_height; } }
-    }
-    #endregion
 
-    #region TextureBitmapLoader
-    public class TexturBitmapLoader : IAssetDataLoader<TextureData2D>
-    {
-        public TextureData2D LoadData(Stream fs)
+        public static TextureData2D LoadBitmap(Stream fs)
         {
             // Data read from the header of the BMP file
             var header = new byte[54]; // Each BMP file begins by a 54-bytes header
@@ -71,10 +66,6 @@ namespace COG.Graphics
             return new TextureData2D(data, width, height);
         }
 
-        public Texture2D Load(AssetUri uri, TextureData2D data)
-        {
-            return new Texture2D(uri, data);
-        }
     }
     #endregion
 

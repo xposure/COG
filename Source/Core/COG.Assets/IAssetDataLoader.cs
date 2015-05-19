@@ -6,10 +6,12 @@ using System.Text;
 
 namespace COG.Assets
 {
-    public interface IAssetDataLoader<out DATA>
-        where DATA : IAssetData
-    {
-        DATA LoadData(Stream stream);
+    public delegate DATA AssetDataLoader<out DATA>(Stream stream);
+ 
+    //public interface IAssetDataLoader<out DATA>
+    //    where DATA : IAssetData
+    //{
+    //    DATA LoadData(Stream stream);
 
-    }
+    //}
 }

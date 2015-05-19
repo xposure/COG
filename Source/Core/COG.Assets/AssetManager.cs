@@ -26,7 +26,7 @@ namespace COG.Assets
             source.Init(this);
         }
 
-        public void RegisterTypeExtension<T>(AssetType type, string extension, IAssetDataLoader<T> loader)
+        public void RegisterTypeExtension<T>(AssetType type, string extension, AssetDataLoader<T> loader)
             where T : IAssetData
         {
             var loadWrapper =
@@ -39,7 +39,7 @@ namespace COG.Assets
                 assetLoader = new AssetLoader(type, new Func<Stream, IAssetData>(
                     s =>
                     {
-                        var data = loader.LoadData(s);
+                        var data = loader(s);
                         return data;
                     })
                 );
