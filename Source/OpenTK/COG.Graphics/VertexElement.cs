@@ -278,8 +278,8 @@ namespace COG.Graphics
         {
             VertexElement[] elements = new VertexElement[] {
                 new VertexElement(3, VertexAttribPointerType.Float, VertexElementSemantic.Position), 
-                new VertexElement(4, VertexAttribPointerType.Float, VertexElementSemantic.Color),
-                new VertexElement(2, VertexAttribPointerType.Float, VertexElementSemantic.Texture)
+                new VertexElement(2, VertexAttribPointerType.Float, VertexElementSemantic.Texture),
+                new VertexElement(4, VertexAttribPointerType.Float, VertexElementSemantic.Color)
             };
             VertexDeclaration declaration = new VertexDeclaration(elements);
             VertexDeclaration = declaration;

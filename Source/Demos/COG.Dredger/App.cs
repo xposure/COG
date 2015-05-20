@@ -8,6 +8,7 @@ namespace COG.Dredger
         [STAThread]
         static void Main(string[] args)
         {
+            new Logging.ConsoleLogger();
             //new ConsoleListener();
             using (var engine = new Engine())
             {

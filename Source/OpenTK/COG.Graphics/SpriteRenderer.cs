@@ -494,10 +494,10 @@ namespace COG.Graphics
 
     //}
 
-    public struct Quad
+    public struct Sprite
     {
         public Texture2D Texture;
-        public VertexPositionTextureColor TL, TR, BL, BR;
+        public VertexPositionTextureColor TL, TR, BR, BL;
 
         public void SetColor(Color c)
         {
@@ -601,9 +601,9 @@ namespace COG.Graphics
             BR.Texture.X = temp;
         }
 
-        public static Quad Create(Texture2D texture, float x0, float y0, float x1, float y1)
+        public static Sprite Create(Texture2D texture, float x0, float y0, float x1, float y1)
         {
-            var quad = new Quad();
+            var quad = new Sprite();
 
             quad.TL.Position.X = x0;
             quad.TL.Position.Y = y0;
@@ -632,7 +632,7 @@ namespace COG.Graphics
     public class SpriteRenderer : DisposableObject
     {
         private ushort m_currentIndex = 0;
-        private Quad[] m_quads = new Quad[2048];
+        private Sprite[] m_quads = new Sprite[2048];
         private StreamMesh m_mesh;
         private Texture m_currentTexture;
         private int m_renderIndex = 0;
@@ -660,7 +660,7 @@ namespace COG.Graphics
             m_mesh = new StreamMesh(VertexPositionTextureColor.VertexDeclaration, 8192);
         }
 
-        public void AddQuad(Quad quad)
+        public void AddQuad(Sprite quad)
         {
             if (m_renderIndex + 1 >= m_quads.Length)
                 Array.Resize(ref m_quads, m_quads.Length * 3 / 2);
@@ -668,7 +668,7 @@ namespace COG.Graphics
             m_quads[m_renderIndex++] = quad;
         }
 
-        public void AddQuads(Quad[] quads)
+        public void AddQuads(Sprite[] quads)
         {
             while (m_renderIndex + quads.Length >= m_quads.Length)
                 Array.Resize(ref m_quads, m_quads.Length * 3 / 2);
@@ -844,6 +844,7 @@ namespace COG.Graphics
         private void ChangeTexture(Texture2D texture)
         {
             m_mesh.Flush();
+            m_currentIndex = 0;
             m_currentTexture = texture;
 
             if (m_currentTexture)
