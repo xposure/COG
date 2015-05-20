@@ -209,7 +209,6 @@ namespace COG.Math
             result.M31 = -Vector3.Dot(vector3, cameraPosition);
             result.M32 = -Vector3.Dot(vector, cameraPosition);
             result.M33 = 1f;
-            result = result.Transpose();
         }
 
         public static Matrix4 CreateOrthographic(float width, float height, float zNearPlane, float zFarPlane)
@@ -231,7 +230,6 @@ namespace COG.Math
             result.M30 = result.M31 = 0f;
             result.M32 = zNearPlane / (zNearPlane - zFarPlane);
             result.M33 = 1f;
-            result = result.Transpose();
         }
 
 
@@ -261,7 +259,6 @@ namespace COG.Math
             result.M31 = (float)(((double)top + (double)bottom) / ((double)bottom - (double)top));
             result.M32 = (float)((double)zNearPlane / ((double)zNearPlane - (double)zFarPlane));
             result.M33 = 1.0f;
-            result = result.Transpose();
         }
 
 
@@ -290,7 +287,6 @@ namespace COG.Math
             result.M31 = position.Y;
             result.M32 = position.Z;
             result.M33 = 1;
-            result = result.Transpose();
         }
 
         public static Matrix4 CreatePerspective(float width, float height, float nearPlaneDistance, float farPlaneDistance)
@@ -324,7 +320,6 @@ namespace COG.Math
 		    result.M23 = -1f;
 		    result.M30 = result.M31 = result.M33 = 0f;
 		    result.M32 = (nearPlaneDistance * farPlaneDistance) / (nearPlaneDistance - farPlaneDistance);
-            result = result.Transpose();
         }
 
 
@@ -354,18 +349,12 @@ namespace COG.Math
 		    {
 		        throw new ArgumentException("nearPlaneDistance >= farPlaneDistance");
 		    }
-		    float num = 1f / ((float) System.Math.Tan((double) (fieldOfView * 0.5f)));
-		    float num9 = num / aspectRatio;
-		    result.M00 = num9;
-		    result.M01 = result.M02 = result.M03 = 0;
-		    result.M11 = num;
-		    result.M10 = result.M12 = result.M13 = 0;
-		    result.M20 = result.M21 = 0f;
-		    result.M22 = farPlaneDistance / (nearPlaneDistance - farPlaneDistance);
-		    result.M23 = -1;
-		    result.M30 = result.M31 = result.M33 = 0;
-		    result.M32 = (nearPlaneDistance * farPlaneDistance) / (nearPlaneDistance - farPlaneDistance);
-            result = result.Transpose();
+            float yMax = nearPlaneDistance * (float)System.Math.Tan(0.5f * fieldOfView);
+            float yMin = -yMax;
+            float xMin = yMin * aspectRatio;
+            float xMax = yMax * aspectRatio;
+
+            CreatePerspectiveOffCenter(xMin, xMax, yMin, yMax, nearPlaneDistance, farPlaneDistance, out result);
         }
 
 
@@ -377,31 +366,31 @@ namespace COG.Math
         }
 
 
-        public static void CreatePerspectiveOffCenter(float left, float right, float bottom, float top, float nearPlaneDistance, float farPlaneDistance, out Matrix4 result)
+        public static void CreatePerspectiveOffCenter(float left, float right, float bottom, float top, float zNear, float zFar, out Matrix4 result)
         {
-            if (nearPlaneDistance <= 0f)
+            if (zNear <= 0f)
             {
                 throw new ArgumentException("nearPlaneDistance <= 0");
             }
-            if (farPlaneDistance <= 0f)
+            if (zFar <= 0f)
             {
                 throw new ArgumentException("farPlaneDistance <= 0");
             }
-            if (nearPlaneDistance >= farPlaneDistance)
+            if (zNear >= zFar)
             {
                 throw new ArgumentException("nearPlaneDistance >= farPlaneDistance");
             }
-            result.M00 = (2f * nearPlaneDistance) / (right - left);
-            result.M01 = result.M02 = result.M03 = 0;
-            result.M11 = (2f * nearPlaneDistance) / (top - bottom);
-            result.M10 = result.M12 = result.M13 = 0;
-            result.M20 = (left + right) / (right - left);
-            result.M21 = (top + bottom) / (top - bottom);
-            result.M22 = farPlaneDistance / (nearPlaneDistance - farPlaneDistance);
-            result.M23 = -1;
-            result.M32 = (nearPlaneDistance * farPlaneDistance) / (nearPlaneDistance - farPlaneDistance);
-            result.M30 = result.M31 = result.M33 = 0;
-            result = result.Transpose();
+            float x = (2.0f * zNear) / (right - left);
+            float y = (2.0f * zNear) / (top - bottom);
+            float a = (right + left) / (right - left);
+            float b = (top + bottom) / (top - bottom);
+            float c = -(zFar + zNear) / (zFar - zNear);
+            float d = -(2.0f * zFar * zNear) / (zFar - zNear);
+
+            result = new Matrix4(x, 0, 0, 0,
+                                        0, y, 0, 0,
+                                        a, b, c, -1,
+                                        0, 0, d, 0);
         }
 
         public static Matrix4 CreateTranslation(Vector3 position)

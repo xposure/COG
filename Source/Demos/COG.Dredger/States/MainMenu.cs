@@ -16,15 +16,15 @@ namespace COG.Dredger.States
             public float color;
             public float speed;
             public Vector2 size;
-            public Vector2 position;
-            public Vector2 direction;
+            public Vector3 position;
+            public Vector3 direction;
         }
 
         private Random rnd = new Random();
         private SpriteRenderer m_renderer;
 
         private int m_particleIndex = 0;
-        private Particle[] m_particles = new Particle[32768];
+        private Particle[] m_particles = new Particle[100000];
         private float timer = 1f;
 
         public ParticleEmitter()
@@ -34,20 +34,23 @@ namespace COG.Dredger.States
 
         public void Update(double dt)
         {
-            int count = 40;
-            while (count-- > 0)
+            int newparticles = (int)(dt * 10000.0);
+            if (newparticles > (int)(0.016f * 10000.0))
+                newparticles = (int)(0.016f * 10000.0);
+
+            while (newparticles-- > 0)
             {
                 if (m_particleIndex < m_particles.Length)
                 {
-                    //if (rnd.Next(1000) < 800)
+                    //if (rnd.Next(1000) < 10)
                     {
                         var particle = m_particles[m_particleIndex];
                         particle.life = 1;
                         particle.speed = rnd.Next(50, 100) / 100f;
                         particle.color = rnd.Next(500, 1000) / 1000f;
                         particle.speed = (float)rnd.NextDouble() * 5;
-                        particle.direction = new Vector2(rnd.Next(-1000, 1000), rnd.Next(-1000, 1000));
-                        particle.position = new Vector2(0, 0);
+                        particle.direction = new Vector3(rnd.Next(-1000, 1000), rnd.Next(-1000, 1000), rnd.Next(-1000, 1000));
+                        particle.position = new Vector3(0, 0, 0);
                         //particle.position = new Vector2(rnd.Next(-1000, 1000), rnd.Next(-1000, 1000));
                         particle.size = new Vector2(rnd.Next(500, 1000), rnd.Next(500, 1000));
 
@@ -66,7 +69,7 @@ namespace COG.Dredger.States
             var fdt = (float)dt;
             for (var i = 0; i < m_particleIndex; i++)
             {
-                m_particles[i].life -= fdt * 0.1f;
+                m_particles[i].life -= fdt ;
 
                 if (m_particles[i].life <= 0)
                     m_particles[i--] = m_particles[--m_particleIndex];
@@ -97,6 +100,7 @@ namespace COG.Dredger.States
             {
                 var p = m_particles[i];
                 var sprite = Sprite.Create(texture, p.position.X, p.position.Y, p.position.X + p.size.X, p.position.Y - p.size.Y);
+                sprite.SetDepth(p.position.Z);
                 sprite.SetColor(new Math.Color(p.life, 0.5f, 0.5f, 0.5f));
 
                 m_renderer.AddQuad(sprite);
@@ -143,7 +147,7 @@ namespace COG.Dredger.States
 
             var decl = new VertexDeclaration();
             decl.AddElement(3, VertexAttribPointerType.Float, VertexElementSemantic.Position);
-            decl.AddElement(2, VertexAttribPointerType.Float, VertexElementSemantic.Texture);
+            decl.AddElement(2, VertexAttribPointerType.Float, VertexElementSemantic.TexCoord0);
 
             m_mesh = new DynamicMesh(decl);
             m_mesh2 = new StreamMesh(decl);
@@ -299,22 +303,39 @@ namespace COG.Dredger.States
 
             // Projection matrix : 45° Field of View, 4:3 ratio, display range : 0.1 unit <-> 100 units
             var Projection = Matrix4.CreatePerspectiveFieldOfView(0.785398163f, 4.0f / 3.0f, 0.1f, 100.0f);
+            var Projection2 = Math.Matrix4.CreatePerspectiveFieldOfView(0.785398163f, 4.0f / 3.0f, 0.1f, 100.0f);
             // Camera matrix
             var View = Matrix4.LookAt(
                     new Vector3(4, 3, 3), // Camera is at (4,3,3), in world space
                     new Vector3(0, 0, 0), // and looks at the origin
                     new Vector3(0, 1, 0) // head is up (set to 0,-1,0 to look upside-down
                 );
+            var View2 = Math.Matrix4.CreateLookAt(new Math.Vector3(4, 3, 3), Math.Vector3.Zero, Math.Vector3.UnitY);
             // Model matrix : an identity matrix (model will be at the origin)
             var Model = Matrix4.CreateRotationY((float)rotation);
+            var Model2 = Math.Matrix4.CreateRotationY((float)rotation);
             //var Model = Matrix4.Identity;
             // Our ModelViewProjection : multiplication of our 3 matrices
+
             var MVP = Projection * View * Model;
             MVP = Model * View * Projection;
 
+            var MVP2 = Projection2 * View2 * Model2;
+            MVP2 = Model2 * View2 * Projection2;
+
+
+            //Console.WriteLine(Projection);
+            //Console.WriteLine(Projection2);
+            //Console.WriteLine();
+            //Console.WriteLine(View * Model);
+            //Console.WriteLine(View2 * Model2);
+            //Console.WriteLine();
+            //Console.WriteLine(MVP);
+            //Console.WriteLine(MVP2);
+            //MVP2 = MVP2.Transpose();
             // Get a handle for our "MVP" uniform.
             // Only at initialisation time.
-            var MatrixID = GL.GetUniformLocation(m_program.ProgramID, "MVP");
+            //var MatrixID = GL.GetUniformLocation(m_program.ProgramID, "MVP");
 
 
             // Send our transformation to the currently bound shader,
@@ -322,7 +343,9 @@ namespace COG.Dredger.States
             // For each model you render, since the MVP will be different (at least the M part)
             //GL.UseProgram(programID);
             m_program.Bind();
-            GL.UniformMatrix4(MatrixID, false, ref MVP);
+            m_program.SetUniformMatrix4("MVP", MVP2);
+            //GL.UniformMatrix4(MatrixID, false, ref MVP);
+            //GL.Uniform1()
 
             //m_program.Bind();
             m_texture.Bind();
@@ -330,10 +353,10 @@ namespace COG.Dredger.States
             //m_mesh.Render();
 
             //MVP = View * Projection;
-            GL.UniformMatrix4(MatrixID, false, ref MVP);
-            MatrixID = GL.GetUniformLocation(m_spriteProgram.ProgramID, "MVP");
+            //GL.UniformMatrix4(MatrixID, false, ref MVP);
+            //MatrixID = GL.GetUniformLocation(m_spriteProgram.ProgramID, "MVP");
             m_spriteProgram.Bind();
-            GL.UniformMatrix4(MatrixID, false, ref MVP);
+            m_spriteProgram.SetUniformMatrix4("MVP", MVP2);
 
             var sprite1 = Sprite.Create(m_texture, -1, 1, 1, -1);
             sprite1.SetColor(COG.Math.Color.White);

@@ -32,6 +32,27 @@ namespace COG.Graphics
             m_vbufferSize = m_vbuffer.Length;
             m_initalSize = initialSize;
 
+            m_ibuffer = new ushort[65536];
+            m_ibufferSize = 65532;
+            //m_indexPos = 65536;
+
+            //this is all the quads we can fit in to 65536 (6 indices per quad)
+            for (var i = 0; i < 10922; i++)
+            {
+                var index = i * 4;
+                Quad((ushort)index, (ushort)(index + 1), (ushort)(index + 2), (ushort)(index + 3));
+            }
+                //m_ibuffer[i] = (ushort)i;
+
+            if (m_ibufferID == 0 && m_indexPos > 0)
+                m_ibufferID = GL.GenBuffer();
+
+            if (m_ibufferID > 0 && m_indexPos > 0)
+            {
+                GL.BindBuffer(BufferTarget.ElementArrayBuffer, m_ibufferID);
+                GL.BufferData(BufferTarget.ElementArrayBuffer, new IntPtr(sizeof(ushort) * m_indexPos), m_ibuffer, BufferUsageHint.StaticDraw);
+                GL.BindBuffer(BufferTarget.ElementArrayBuffer, 0);
+            }
         }
 
         public void Flush()
@@ -42,9 +63,6 @@ namespace COG.Graphics
             if (m_vbufferID == 0 && m_vertexPos > 0)
                 m_vbufferID = GL.GenBuffer();
 
-            if (m_ibufferID == 0 && m_indexPos > 0)
-                m_ibufferID = GL.GenBuffer();
-
             if (m_vbufferID > 0 && m_vertexPos > 0)
             {
                 GL.BindBuffer(BufferTarget.ArrayBuffer, m_vbufferID);
@@ -52,17 +70,10 @@ namespace COG.Graphics
                 GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
             }
 
-            if (m_ibufferID > 0 && m_indexPos > 0)
-            {
-                GL.BindBuffer(BufferTarget.ElementArrayBuffer, m_ibufferID);
-                GL.BufferData(BufferTarget.ElementArrayBuffer, new IntPtr(sizeof(ushort) * m_indexPos), m_ibuffer, BufferUsageHint.StreamDraw);
-                GL.BindBuffer(BufferTarget.ElementArrayBuffer, 0);
-            }
-
             Render();
 
             m_vertexPos = 0;
-            m_indexPos = 0;
+            //m_indexPos = 0;
         }
 
         public void Render()
@@ -80,7 +91,7 @@ namespace COG.Graphics
                 else
                 {
                     GL.BindBuffer(BufferTarget.ElementArrayBuffer, m_ibufferID);
-                    GL.DrawElements(PrimitiveType.Triangles, m_indexPos, DrawElementsType.UnsignedShort, IntPtr.Zero);
+                    GL.DrawElements(PrimitiveType.Triangles, m_vertexPos / 2 * 3 , DrawElementsType.UnsignedShort, IntPtr.Zero);
                     GL.BindBuffer(BufferTarget.ElementArrayBuffer, 0);
                 }
                 m_decl.Disable();

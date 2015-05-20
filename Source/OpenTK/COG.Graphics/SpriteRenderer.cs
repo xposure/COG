@@ -863,7 +863,8 @@ namespace COG.Graphics
             {
                 var quad = m_quads[i];
                 {
-                    if (m_currentTexture.TextureID != quad.Texture.TextureID || (m_currentIndex + 4) >= 65535)
+                    m_currentIndex += 4;
+                    if (m_currentTexture.TextureID != quad.Texture.TextureID || (m_currentIndex / 2 * 3) >= 65535)
                         ChangeTexture(quad.Texture);
 
                     m_mesh.Position(quad.TL.Position);
@@ -882,12 +883,12 @@ namespace COG.Graphics
                     m_mesh.TextureCoord(quad.BL.Texture);
                     m_mesh.Color(quad.BL.Color);
 
-                    var tl = m_currentIndex++;
-                    var tr = m_currentIndex++;
-                    var br = m_currentIndex++;
-                    var bl = m_currentIndex++;
+                    //var tl = m_currentIndex++;
+                    //var tr = m_currentIndex++;
+                    //var br = m_currentIndex++;
+                    //var bl = m_currentIndex++;
 
-                    m_mesh.Quad(tl, tr, br, bl);
+                    //m_mesh.Quad(tl, tr, br, bl);
                 }
             }
 

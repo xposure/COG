@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
+using COG.Logging;
 using COG.Math;
 using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL4;
@@ -13,13 +14,381 @@ namespace COG.Graphics
     //so i have decided to hard code their attrib locations
     public enum VertexElementSemantic : int
     {
-        Position = 0,
-        Texture = 1,
-        Color = 2
+        Position,
+        TexCoord0,
+        TexCoord1,
+        Color
     };
+
+    public enum VertexUniformType
+    {
+        Unknown,
+        Bool,
+        Float,
+        Double,
+        Byte,
+        Int,
+        UnsignedInt
+    }
+
+    public enum VertexUniformSemantic
+    {
+        Unknown,
+        Vector,
+        Vector2,
+        Vector3,
+        Vector4,
+        Matrix4,
+        Texture1D,
+        Texture2D,
+        Texture3D
+    }
+
+    public class VertexUniform
+    {
+        private static readonly Logger g_logger = Logger.GetLogger(typeof(VertexUniform));
+
+        private string m_name;
+        private ushort m_location;
+        private int m_typeCount;
+        private VertexUniformType m_type;
+        private VertexUniformSemantic m_semantic;
+
+        public VertexUniform(string name, ushort location, int typeCount, VertexUniformSemantic semantic, VertexUniformType type)
+        {
+            m_name = name;
+            m_location = location;
+            m_typeCount = typeCount;
+            m_semantic = semantic;
+            m_type = type;
+        }
+
+        public string Name { get { return m_name; } }
+        public VertexUniformType Type { get { return m_type; } }
+        public VertexUniformSemantic Semantic { get { return m_semantic; } }
+        public int TypeCount { get { return m_typeCount; } }
+        public int Location { get { return m_location; } }
+
+        public static VertexUniform CreateFromProgram(string name, ushort location, ActiveUniformType uniform)
+        {
+            var typeCount = GetTypeCount(uniform);
+            var semantic = GetSemantic(uniform);
+            var type = GetType(uniform);
+
+            if(typeCount == -1 || semantic == VertexUniformSemantic.Unknown || type == VertexUniformType.Unknown)            
+            {
+                g_logger.error("Unsupported uniform {0} with type {1}.", name, uniform);
+                return null;
+            }
+
+            return new VertexUniform(name, location, typeCount, semantic, type);      
+        }
+
+        public static VertexUniformSemantic GetSemantic(ActiveUniformType type)
+        {
+            switch (type)
+            {
+                case ActiveUniformType.Bool:
+                case ActiveUniformType.Double:
+                case ActiveUniformType.Float:
+                case ActiveUniformType.Int:
+                case ActiveUniformType.UnsignedInt:
+                    return VertexUniformSemantic.Vector;
+                case ActiveUniformType.BoolVec2:
+                case ActiveUniformType.DoubleVec2:
+                case ActiveUniformType.FloatVec2:
+                case ActiveUniformType.IntVec2:
+                case ActiveUniformType.UnsignedIntVec2:
+                    return VertexUniformSemantic.Vector2;
+                case ActiveUniformType.BoolVec3:
+                case ActiveUniformType.DoubleVec3:
+                case ActiveUniformType.FloatVec3:
+                case ActiveUniformType.IntVec3:
+                case ActiveUniformType.UnsignedIntVec3:
+                    return VertexUniformSemantic.Vector3;
+                case ActiveUniformType.BoolVec4:
+                case ActiveUniformType.DoubleVec4:
+                case ActiveUniformType.FloatVec4:
+                case ActiveUniformType.IntVec4:
+                case ActiveUniformType.UnsignedIntVec4:
+                    return VertexUniformSemantic.Vector4;
+                case ActiveUniformType.FloatMat4:
+                    return VertexUniformSemantic.Matrix4;
+                case ActiveUniformType.Sampler1D:
+                    return VertexUniformSemantic.Texture1D;
+                case ActiveUniformType.Sampler2D:
+                    return VertexUniformSemantic.Texture2D;
+                case ActiveUniformType.Sampler3D:
+                    return VertexUniformSemantic.Texture3D;
+
+            }
+
+            return VertexUniformSemantic.Unknown;
+        }
+
+        public static VertexUniformType GetType(ActiveUniformType type)
+        {
+            switch (type)
+            {
+                case ActiveUniformType.Bool:
+                case ActiveUniformType.BoolVec2:
+                case ActiveUniformType.BoolVec3:
+                case ActiveUniformType.BoolVec4:
+                    return VertexUniformType.Bool;
+                case ActiveUniformType.Double:
+                case ActiveUniformType.DoubleVec2:
+                case ActiveUniformType.DoubleVec3:
+                case ActiveUniformType.DoubleVec4:
+                    return VertexUniformType.Double;
+                case ActiveUniformType.Float:
+                case ActiveUniformType.FloatMat2:
+                case ActiveUniformType.FloatMat2x3:
+                case ActiveUniformType.FloatMat2x4:
+                case ActiveUniformType.FloatMat3:
+                case ActiveUniformType.FloatMat3x2:
+                case ActiveUniformType.FloatMat3x4:
+                case ActiveUniformType.FloatMat4:
+                case ActiveUniformType.FloatMat4x2:
+                case ActiveUniformType.FloatMat4x3:
+                case ActiveUniformType.FloatVec2:
+                case ActiveUniformType.FloatVec3:
+                case ActiveUniformType.FloatVec4:
+                    return VertexUniformType.Float;
+                case ActiveUniformType.Sampler1D:
+                case ActiveUniformType.Sampler2D:
+                case ActiveUniformType.Sampler3D:
+                case ActiveUniformType.Int:
+                case ActiveUniformType.IntVec2:
+                case ActiveUniformType.IntVec3:
+                case ActiveUniformType.IntVec4:
+                    return VertexUniformType.Int;
+                case ActiveUniformType.UnsignedInt:
+                case ActiveUniformType.UnsignedIntVec2:
+                case ActiveUniformType.UnsignedIntVec3:
+                case ActiveUniformType.UnsignedIntVec4:
+                    return VertexUniformType.UnsignedInt;
+
+            }
+
+            return VertexUniformType.Unknown;
+        }
+
+        public static int GetTypeCount(ActiveUniformType type)
+        {
+            switch (type)
+            {
+                case ActiveUniformType.Sampler1D:
+                case ActiveUniformType.Sampler2D:
+                case ActiveUniformType.Sampler3D:
+                case ActiveUniformType.Bool:
+                case ActiveUniformType.Double:
+                case ActiveUniformType.Float:
+                case ActiveUniformType.Int:
+                case ActiveUniformType.UnsignedInt:
+                    return 1;
+                case ActiveUniformType.BoolVec2:
+                case ActiveUniformType.DoubleVec2:
+                case ActiveUniformType.FloatVec2:
+                case ActiveUniformType.IntVec2:
+                case ActiveUniformType.UnsignedIntVec2:
+                    return 2;
+                case ActiveUniformType.BoolVec3:
+                case ActiveUniformType.DoubleVec3:
+                case ActiveUniformType.FloatVec3:
+                case ActiveUniformType.IntVec3:
+                case ActiveUniformType.UnsignedIntVec3:
+                    return 3;
+                case ActiveUniformType.BoolVec4:
+                case ActiveUniformType.DoubleVec4:
+                case ActiveUniformType.FloatVec4:
+                case ActiveUniformType.IntVec4:
+                case ActiveUniformType.UnsignedIntVec4:
+                case ActiveUniformType.FloatMat2:
+                    return 4;
+                case ActiveUniformType.FloatMat3x2:
+                case ActiveUniformType.FloatMat2x3:
+                    return 6;
+                case ActiveUniformType.FloatMat2x4:
+                case ActiveUniformType.FloatMat4x2:
+                    return 8;
+                case ActiveUniformType.FloatMat3:
+                    return 9;
+                case ActiveUniformType.FloatMat3x4:
+                case ActiveUniformType.FloatMat4x3:
+                    return 12;
+                case ActiveUniformType.FloatMat4:
+                    return 16;
+            }
+
+            return -1;
+        }
+
+       
+
+        //private bool InternalSet(int p0, int p1, int p2, int p3, int size)
+        //{
+        //    if (m_isMatrix)
+        //    {
+        //        g_logger.error("Uniform is a matrix not a vec1");
+        //        return false;
+        //    }
+
+        //    if (m_typeCount != size)
+        //    {
+        //        g_logger.error("Uniform expects a vec{0} and got vec{1}.", m_typeCount, size);
+        //        return false;
+        //    }
+
+        //    if (m_type != VertexUniformType.Int)
+        //        g_logger.warn("Uniform is of type {0} but was set with {1}.", m_type, "int");
+
+        //    if (size == 1)
+        //        GL.Uniform1(m_location, p0);
+        //    else if (size == 2)
+        //        GL.Uniform2(m_location, p0, p1);
+        //    else if (size == 3)
+        //        GL.Uniform3(m_location, p0, p1, p2);
+        //    else if (size == 4)
+        //        GL.Uniform4(m_location, p0, p1, p2, p3);
+        //    else
+        //        return false;
+
+        //    return true;
+        //}
+
+  
+    }
+
+    public class VertexAttribute
+    {
+        private static readonly Logger g_logger = Logger.GetLogger(typeof(VertexAttribute));
+
+        //protected string m_name;
+        private ushort m_source;
+        private int m_typeCount;
+        private VertexAttribPointerType m_type;
+        private VertexElementSemantic m_semantic;
+
+        public VertexAttribute(/*string name, */ ushort source, int typeCount, VertexAttribPointerType type, VertexElementSemantic semantic)
+        {
+            m_source = source;
+            m_typeCount = typeCount;
+            m_type = type;
+            m_semantic = semantic;
+        }
+
+        //public string Name { get { return m_name; } }
+        public ushort Source { get { return m_source; } }
+        public int TypeCount { get { return m_typeCount; } }
+        public VertexAttribPointerType Type { get { return m_type; } }
+        public VertexElementSemantic Semantic { get { return m_semantic; } }
+
+        public override string ToString()
+        {
+            return string.Format("VertexAttribute: {{ Source: {0}, TypeCount: {1}, Type: {2}, Semantic: {3} }}", m_source, m_typeCount, m_type, m_semantic);
+        }
+
+        public static VertexAttribute CreateFromProgram(string name, ushort source, ActiveAttribType attrib)
+        {
+            int typeCount;
+            VertexAttribPointerType type;
+            if (ConvertAttribTypeToVertexPointer(attrib, out typeCount, out type))
+            {
+                try
+                {
+                    var semantic = (VertexElementSemantic)Enum.Parse(typeof(VertexElementSemantic), name, true);
+                    return new VertexAttribute(source, typeCount, type, semantic);
+                }
+                catch
+                {
+                    g_logger.error("Semantic '{0}' is not valid.", name);
+                    //throw error
+                }
+
+            }
+            return null;
+        }
+
+        public static bool ConvertAttribTypeToVertexPointer(ActiveAttribType attrib, out int typeCount, out VertexAttribPointerType type)
+        {
+            switch (attrib)
+            {
+                case ActiveAttribType.Double:
+                    type = VertexAttribPointerType.Double;
+                    typeCount = 1;
+                    return true;
+                case ActiveAttribType.DoubleVec2:
+                    type = VertexAttribPointerType.Double;
+                    typeCount = 2;
+                    return true;
+                case ActiveAttribType.DoubleVec3:
+                    type = VertexAttribPointerType.Double;
+                    typeCount = 3;
+                    return true;
+                case ActiveAttribType.DoubleVec4:
+                    type = VertexAttribPointerType.Double;
+                    typeCount = 4;
+                    return true;
+                case ActiveAttribType.Float:
+                    type = VertexAttribPointerType.Float;
+                    typeCount = 1;
+                    return true;
+                case ActiveAttribType.FloatVec2:
+                    type = VertexAttribPointerType.Float;
+                    typeCount = 2;
+                    return true;
+                case ActiveAttribType.FloatVec3:
+                    type = VertexAttribPointerType.Float;
+                    typeCount = 3;
+                    return true;
+                case ActiveAttribType.FloatVec4:
+                    type = VertexAttribPointerType.Float;
+                    typeCount = 4;
+                    return true;
+                case ActiveAttribType.Int:
+                    type = VertexAttribPointerType.Int;
+                    typeCount = 1;
+                    return true;
+                case ActiveAttribType.IntVec2:
+                    type = VertexAttribPointerType.Int;
+                    typeCount = 2;
+                    return true;
+                case ActiveAttribType.IntVec3:
+                    type = VertexAttribPointerType.Int;
+                    typeCount = 3;
+                    return true;
+                case ActiveAttribType.IntVec4:
+                    type = VertexAttribPointerType.Int;
+                    typeCount = 4;
+                    return true;
+                case ActiveAttribType.UnsignedInt:
+                    type = VertexAttribPointerType.UnsignedInt;
+                    typeCount = 1;
+                    return true;
+                case ActiveAttribType.UnsignedIntVec2:
+                    type = VertexAttribPointerType.UnsignedInt;
+                    typeCount = 2;
+                    return true;
+                case ActiveAttribType.UnsignedIntVec3:
+                    type = VertexAttribPointerType.UnsignedInt;
+                    typeCount = 3;
+                    return true;
+                case ActiveAttribType.UnsignedIntVec4:
+                    type = VertexAttribPointerType.UnsignedInt;
+                    typeCount = 4;
+                    return true;
+            }
+
+            typeCount = -1;
+            type = VertexAttribPointerType.Byte;
+            return false;
+        }
+    }
 
     public class VertexElement
     {
+       
+
         #region Protected
         protected short m_source;
         protected int m_offset;
@@ -120,6 +489,8 @@ namespace COG.Graphics
 
     public class VertexDeclaration : IEnumerable<VertexElement>
     {
+
+
         protected int m_stride;
         protected List<VertexElement> m_elements;
 
@@ -278,7 +649,7 @@ namespace COG.Graphics
         {
             VertexElement[] elements = new VertexElement[] {
                 new VertexElement(3, VertexAttribPointerType.Float, VertexElementSemantic.Position), 
-                new VertexElement(2, VertexAttribPointerType.Float, VertexElementSemantic.Texture),
+                new VertexElement(2, VertexAttribPointerType.Float, VertexElementSemantic.TexCoord0),
                 new VertexElement(4, VertexAttribPointerType.Float, VertexElementSemantic.Color)
             };
             VertexDeclaration declaration = new VertexDeclaration(elements);
