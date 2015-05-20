@@ -25,6 +25,7 @@ namespace COG.Dredger.States
 
         private int m_particleIndex = 0;
         private Particle[] m_particles = new Particle[32768];
+        private float timer = 1f;
 
         public ParticleEmitter()
         {
@@ -59,6 +60,7 @@ namespace COG.Dredger.States
                         m_particleIndex++;
                     }
                 }
+
             }
 
             var fdt = (float)dt;
@@ -73,6 +75,14 @@ namespace COG.Dredger.States
                     m_particles[i].position = m_particles[i].position + (m_particles[i].direction * m_particles[i].speed * fdt);
                 }
             }
+
+            timer -= (float)dt;
+            if (timer <= 0)
+            {
+                timer += 1f;
+                Console.WriteLine("Particles: {0}", m_particleIndex);
+            }
+
         }
 
         public void Render(Texture2D texture, double dt)

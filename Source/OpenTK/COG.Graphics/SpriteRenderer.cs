@@ -663,8 +663,10 @@ namespace COG.Graphics
         public void AddQuad(Sprite quad)
         {
             if (m_renderIndex + 1 >= m_quads.Length)
+            {
+                Console.WriteLine("Resizing: {0} - {1}", m_quads.Length, m_quads.Length * 3 / 2);
                 Array.Resize(ref m_quads, m_quads.Length * 3 / 2);
-
+            }
             m_quads[m_renderIndex++] = quad;
         }
 
@@ -861,7 +863,7 @@ namespace COG.Graphics
             {
                 var quad = m_quads[i];
                 {
-                    if (m_currentTexture.TextureID != quad.Texture.TextureID)
+                    if (m_currentTexture.TextureID != quad.Texture.TextureID || (m_currentIndex + 4) >= 65535)
                         ChangeTexture(quad.Texture);
 
                     m_mesh.Position(quad.TL.Position);

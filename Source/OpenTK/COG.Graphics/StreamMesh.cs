@@ -31,6 +31,7 @@ namespace COG.Graphics
             m_vbuffer = new float[m_decl.Size * initialSize];
             m_vbufferSize = m_vbuffer.Length;
             m_initalSize = initialSize;
+
         }
 
         public void Flush()
@@ -49,7 +50,6 @@ namespace COG.Graphics
                 GL.BindBuffer(BufferTarget.ArrayBuffer, m_vbufferID);
                 GL.BufferData(BufferTarget.ArrayBuffer, new IntPtr(sizeof(float) * m_vertexPos), m_vbuffer, BufferUsageHint.StreamDraw);
                 GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
-
             }
 
             if (m_ibufferID > 0 && m_indexPos > 0)
@@ -93,6 +93,8 @@ namespace COG.Graphics
         {
             m_vbufferSize = m_vbufferSize * 3 / 2;
             Array.Resize(ref m_vbuffer, m_vbufferSize);
+            Console.WriteLine("Growing vbuffer: {0}", m_vbufferSize);
+
         }
 
         private void GrowIndexBuffer()
@@ -106,7 +108,9 @@ namespace COG.Graphics
             else
             {
                 m_ibufferSize = m_ibufferSize * 3 / 2;
+
                 Array.Resize(ref m_ibuffer, m_ibufferSize);
+                Console.WriteLine("Growing ibuffer: {0}", m_ibufferSize);
             }
         }
 
