@@ -8,16 +8,19 @@
 //{
 //    public class GeometryBatch : DisposableObject
 //    {
+//        public const int INITIAL_SIZE = 1024;
 //        public const int MAX_SIZE = 65536;
 
-//        private HardwareVertexBuffer m_vertexBuffer;
-//        private HardwareIndexBuffer m_indexBuffer;
+//        private DynamicMesh m_mesh;
 
-//        private ushort m_indexBufferPos;
+//        //private HardwareVertexBuffer m_vertexBuffer;
+//        //private HardwareIndexBuffer m_indexBuffer;
+
+//        //private ushort m_indexBufferPos;
 //        private ushort m_vertexBufferPos;
 
-//        private VertexPositionTextureColor[] m_vertices;
-//        private ushort[] m_indices;
+//        //private VertexPositionTextureColor[] m_vertices;
+//        //private ushort[] m_indices;
 
 //        private bool m_beginCalled;
 //        private Texture2D m_texture = null;
@@ -25,27 +28,37 @@
 //        protected override void DisposeManaged()
 //        {
 //            base.DisposeManaged();
-//            m_vertexBuffer.Dispose();
-//            m_indexBuffer.Dispose();
 
-//            m_vertexBuffer = null;
-//            m_indexBuffer = null;
-//            m_vertices = null;
-//            m_indices = null;
+//            m_mesh.Dispose();
+//            m_mesh = null;
+//            //m_vertexBuffer.Dispose();
+//            //m_indexBuffer.Dispose();
+
+//            //m_vertexBuffer = null;
+//            //m_indexBuffer = null;
+//            //m_vertices = null;
+//            //m_indices = null;
 
 //            m_texture = null; //we don't own this
 //        }
 
 //        public GeometryBatch()
+//            : this(INITIAL_SIZE)
 //        {
-//            m_vertexBuffer = new HardwareVertexBuffer(VertexPositionTextureColor.VertexDeclaration, BufferUsage.Dynamic);
-//            m_indexBuffer = new HardwareIndexBuffer(IndexType.Size16, BufferUsage.Dynamic);
+//            m_mesh = new DynamicMesh()
+//            //m_vertexBuffer = new HardwareVertexBuffer(VertexPositionTextureColor.VertexDeclaration, BufferUsage.Dynamic);
+//            //m_indexBuffer = new HardwareIndexBuffer(IndexType.Size16, BufferUsage.Dynamic);
 
-//            m_vertexBuffer.Resize(MAX_SIZE);
-//            m_indexBuffer.Resize(MAX_SIZE);
+//            //m_vertexBuffer.Resize(MAX_SIZE);
+//            //m_indexBuffer.Resize(MAX_SIZE);
 
-//            m_vertices = new VertexPositionTextureColor[MAX_SIZE];
-//            m_indices = new ushort[MAX_SIZE];
+//            //m_vertices = new VertexPositionTextureColor[MAX_SIZE];
+//            //m_indices = new ushort[MAX_SIZE];
+//        }
+
+//        public GeometryBatch(int initialSize)
+//        {
+//            m_mesh = new DynamicMesh(null, initialSize);
 //        }
 
 //        private void Flush()

@@ -16,17 +16,20 @@ namespace COG.Graphics
     {
         #region Const
 
-        private const int TEMP_INITIAL_INDEX_SIZE = sizeof(UInt16) * TEMP_INITIAL_SIZE;
+        //private const int TEMP_INITIAL_INDEX_SIZE = sizeof(UInt16) * TEMP_INITIAL_SIZE;
         private const int TEMP_INITIAL_SIZE = 64;
-        private const int TEMP_INITIAL_VERTEX_SIZE = TEMP_VERTEXSIZE_GUESS * TEMP_INITIAL_SIZE;
-        private const int TEMP_VERTEXSIZE_GUESS = sizeof(float) * 12;
+        //private const int TEMP_INITIAL_VERTEX_SIZE = TEMP_VERTEXSIZE_GUESS * TEMP_INITIAL_SIZE;
+        //private const int TEMP_VERTEXSIZE_GUESS = sizeof(float) * 12;
 
         #endregion Const
 
-        private int m_bufferID;
-        private int m_pos = 0;
-        private int m_bufferSize = 0;
-        private float[] m_buffer;
+        //private int m_
+        private int m_initalSize;
+        private int m_vbufferID, m_ibufferID;
+        private int m_vertexPos = 0, m_indexPos = 0;
+        private int m_vbufferSize = 0, m_ibufferSize = 0;
+        private float[] m_vbuffer;
+        private ushort[] m_ibuffer;
         private VertexDeclaration m_decl = new VertexDeclaration();
 
         public DynamicMesh(VertexDeclaration decl)
@@ -37,173 +40,247 @@ namespace COG.Graphics
         public DynamicMesh(VertexDeclaration decl, int initialSize)
         {
             m_decl = decl;
-            m_buffer = new float[m_decl.Size * initialSize];
-            m_bufferSize = m_buffer.Length;
+            m_vbuffer = new float[m_decl.Size * initialSize];
+            m_vbufferSize = m_vbuffer.Length;
+            m_initalSize = initialSize;
         }
 
         public void Begin()
         {
-            m_pos = 0;
+            m_vertexPos = 0;
+            m_indexPos = 0;
         }
 
         public void End(BufferUsageHint usage)
         {
-            if ((m_pos % m_decl.VertexSize) != 0)
+            if ((m_vertexPos % m_decl.VertexSize) != 0)
                 throw new Exception("End position was not a multiple of declarations vertex size.");
 
-            if (m_bufferID == 0)
-                m_bufferID = GL.GenBuffer();
+            if (m_vbufferID == 0 && m_vertexPos > 0)
+                m_vbufferID = GL.GenBuffer();
 
-            GL.BindBuffer(BufferTarget.ArrayBuffer, m_bufferID);
+            if (m_ibufferID == 0 && m_indexPos > 0)
+                m_ibufferID = GL.GenBuffer();
 
-            var vertexBufferSize = new IntPtr(sizeof(float) * m_pos);
-            GL.BufferData(BufferTarget.ArrayBuffer, vertexBufferSize, m_buffer, usage);
+            if (m_vbufferID > 0)
+            {
+                GL.BindBuffer(BufferTarget.ArrayBuffer, m_vbufferID);
+                GL.BufferData(BufferTarget.ArrayBuffer, new IntPtr(sizeof(float) * m_vertexPos), m_vbuffer, usage);
+                GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
+
+            }
+
+            if (m_ibufferID > 0)
+            {
+                GL.BindBuffer(BufferTarget.ElementArrayBuffer, m_ibufferID);
+                GL.BufferData(BufferTarget.ElementArrayBuffer, new IntPtr(sizeof(ushort) * m_indexPos), m_ibuffer, usage);
+                GL.BindBuffer(BufferTarget.ElementArrayBuffer, 0);
+            }
         }
 
         public void Render()
         {
-            if (m_bufferID > 0 && m_pos > 0)
+            if (m_vbufferID > 0 && m_vertexPos > 0)
             {
-                GL.BindBuffer(BufferTarget.ArrayBuffer, m_bufferID);
+                GL.BindBuffer(BufferTarget.ArrayBuffer, m_vbufferID);
                 m_decl.Enable();
+                var vertices = m_vertexPos / m_decl.Size;
 
-                var vertices = m_pos / m_decl.Size;
-                //var triangles = vertices;
-                GL.DrawArrays(PrimitiveType.Triangles, 0, vertices);
-
+                if (m_indexPos == 0)
+                {
+                    GL.DrawArrays(PrimitiveType.Triangles, 0, vertices);
+                }
+                else
+                {
+                    GL.BindBuffer(BufferTarget.ElementArrayBuffer, m_ibufferID);
+                    GL.DrawElements(PrimitiveType.Triangles, m_indexPos, DrawElementsType.UnsignedShort, IntPtr.Zero);
+                    GL.BindBuffer(BufferTarget.ElementArrayBuffer, 0);
+                }
                 m_decl.Disable();
                 GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
+
             }
         }
 
         private void GrowVertexBuffer()
         {
-            var newSize = m_buffer.Length * 3 / 2;
-            Array.Resize(ref m_buffer, newSize);
-            m_bufferSize = m_buffer.Length;
+            m_vbufferSize = m_vbufferSize * 3 / 2;
+            Array.Resize(ref m_vbuffer, m_vbufferSize);
+        }
+
+        private void GrowIndexBuffer()
+        {
+            if (m_ibufferSize == 0)
+            {
+                var newSize = Math.Max(TEMP_INITIAL_SIZE, m_initalSize);
+                m_ibuffer = new ushort[newSize];
+                m_ibufferSize = newSize;
+            }
+            else
+            {
+                m_ibufferSize = m_ibufferSize * 3 / 2;
+                Array.Resize(ref m_ibuffer, m_ibufferSize);
+            }
+        }
+
+        public void Index(ushort i)
+        {
+            if (m_indexPos + 1 >= m_ibufferSize)
+                GrowIndexBuffer();
+
+            m_ibuffer[m_indexPos++] = i;
+        }
+
+        public void Triangle(ushort i0, ushort i1, ushort i2)
+        {
+            if (m_indexPos + 3 >= m_ibufferSize)
+                GrowIndexBuffer();
+
+            m_ibuffer[m_indexPos++] = i0;
+            m_ibuffer[m_indexPos++] = i1;
+            m_ibuffer[m_indexPos++] = i2;
+        }
+
+        public void Quad(ushort tl, ushort tr, ushort br, ushort bl)
+        {
+            if (m_indexPos + 6 >= m_ibufferSize)
+                GrowIndexBuffer();
+
+            m_ibuffer[m_indexPos++] = tl;
+            m_ibuffer[m_indexPos++] = tr;
+            m_ibuffer[m_indexPos++] = bl;
+
+            m_ibuffer[m_indexPos++] = bl;
+            m_ibuffer[m_indexPos++] = tr;
+            m_ibuffer[m_indexPos++] = br;
         }
 
         public void Position(Vector2 v)
         {
-            if (m_pos + 2 >= m_bufferSize)
+            if (m_vertexPos + 2 >= m_vbufferSize)
                 GrowVertexBuffer();
 
-            m_buffer[m_pos++] = v.X;
-            m_buffer[m_pos++] = v.Y;
+            m_vbuffer[m_vertexPos++] = v.X;
+            m_vbuffer[m_vertexPos++] = v.Y;
         }
 
         public void Position(Vector3 v)
         {
-            if (m_pos + 3 >= m_bufferSize)
+            if (m_vertexPos + 3 >= m_vbufferSize)
                 GrowVertexBuffer();
 
-            m_buffer[m_pos++] = v.X;
-            m_buffer[m_pos++] = v.Y;
-            m_buffer[m_pos++] = v.Z;
+            m_vbuffer[m_vertexPos++] = v.X;
+            m_vbuffer[m_vertexPos++] = v.Y;
+            m_vbuffer[m_vertexPos++] = v.Z;
         }
 
         public void Position(float x, float y)
         {
-            if (m_pos + 2 >= m_bufferSize)
+            if (m_vertexPos + 2 >= m_vbufferSize)
                 GrowVertexBuffer();
 
-            m_buffer[m_pos++] = x;
-            m_buffer[m_pos++] = y;
+            m_vbuffer[m_vertexPos++] = x;
+            m_vbuffer[m_vertexPos++] = y;
         }
 
         public void Position(float x, float y, float z)
         {
-            if (m_pos + 3 >= m_bufferSize)
+            if (m_vertexPos + 3 >= m_vbufferSize)
                 GrowVertexBuffer();
 
-            m_buffer[m_pos++] = x;
-            m_buffer[m_pos++] = y;
-            m_buffer[m_pos++] = z;
+            m_vbuffer[m_vertexPos++] = x;
+            m_vbuffer[m_vertexPos++] = y;
+            m_vbuffer[m_vertexPos++] = z;
         }
 
         public void TextureCoord(Vector2 v)
         {
-            if (m_pos + 2 >= m_bufferSize)
+            if (m_vertexPos + 2 >= m_vbufferSize)
                 GrowVertexBuffer();
 
-            m_buffer[m_pos++] = v.X;
-            m_buffer[m_pos++] = v.Y;
+            m_vbuffer[m_vertexPos++] = v.X;
+            m_vbuffer[m_vertexPos++] = v.Y;
         }
 
         public void TextureCoord(float u, float v)
         {
-            if (m_pos + 2 >= m_bufferSize)
+            if (m_vertexPos + 2 >= m_vbufferSize)
                 GrowVertexBuffer();
 
-            m_buffer[m_pos++] = u;
-            m_buffer[m_pos++] = v;
+            m_vbuffer[m_vertexPos++] = u;
+            m_vbuffer[m_vertexPos++] = v;
         }
 
         public void Color(Vector3 v)
         {
-            if (m_pos + 3 >= m_bufferSize)
+            if (m_vertexPos + 3 >= m_vbufferSize)
                 GrowVertexBuffer();
 
-            m_buffer[m_pos++] = v.X;
-            m_buffer[m_pos++] = v.Y;
-            m_buffer[m_pos++] = v.Z;
+            m_vbuffer[m_vertexPos++] = v.X;
+            m_vbuffer[m_vertexPos++] = v.Y;
+            m_vbuffer[m_vertexPos++] = v.Z;
         }
 
         public void Color(Vector4 v)
         {
-            if (m_pos + 4 >= m_bufferSize)
+            if (m_vertexPos + 4 >= m_vbufferSize)
                 GrowVertexBuffer();
 
-            m_buffer[m_pos++] = v.X;
-            m_buffer[m_pos++] = v.Y;
-            m_buffer[m_pos++] = v.Z;
-            m_buffer[m_pos++] = v.W;
+            m_vbuffer[m_vertexPos++] = v.X;
+            m_vbuffer[m_vertexPos++] = v.Y;
+            m_vbuffer[m_vertexPos++] = v.Z;
+            m_vbuffer[m_vertexPos++] = v.W;
         }
 
         public void Color(Color4 v)
         {
-            if (m_pos + 4 >= m_bufferSize)
+            if (m_vertexPos + 4 >= m_vbufferSize)
                 GrowVertexBuffer();
 
-            m_buffer[m_pos++] = v.R;
-            m_buffer[m_pos++] = v.G;
-            m_buffer[m_pos++] = v.B;
-            m_buffer[m_pos++] = v.A;
+            m_vbuffer[m_vertexPos++] = v.R;
+            m_vbuffer[m_vertexPos++] = v.G;
+            m_vbuffer[m_vertexPos++] = v.B;
+            m_vbuffer[m_vertexPos++] = v.A;
         }
 
         public void Color(float r, float g, float b)
         {
-            if (m_pos + 3 >= m_bufferSize)
+            if (m_vertexPos + 3 >= m_vbufferSize)
                 GrowVertexBuffer();
 
-            m_buffer[m_pos++] = r;
-            m_buffer[m_pos++] = g;
-            m_buffer[m_pos++] = b;
+            m_vbuffer[m_vertexPos++] = r;
+            m_vbuffer[m_vertexPos++] = g;
+            m_vbuffer[m_vertexPos++] = b;
         }
 
         public void Color(float r, float g, float b, float a)
         {
-            if (m_pos + 4 >= m_bufferSize)
+            if (m_vertexPos + 4 >= m_vbufferSize)
                 GrowVertexBuffer();
 
-            m_buffer[m_pos++] = r;
-            m_buffer[m_pos++] = g;
-            m_buffer[m_pos++] = b;
-            m_buffer[m_pos++] = a;
+            m_vbuffer[m_vertexPos++] = r;
+            m_vbuffer[m_vertexPos++] = g;
+            m_vbuffer[m_vertexPos++] = b;
+            m_vbuffer[m_vertexPos++] = a;
         }
 
         private void Destroy()
         {
-            if (m_bufferID > 0)
-                GL.DeleteBuffer(m_bufferID);
+            if (m_vbufferID > 0)
+                GL.DeleteBuffer(m_vbufferID);
 
-            m_bufferID = 0;
+            m_vbufferID = 0;
+
+            if (m_ibufferID > 0)
+                GL.DeleteBuffer(m_ibufferID);
+
+            m_ibufferID = 0;
         }
 
         protected override void DisposedUnmanaged()
         {
             base.DisposedUnmanaged();
-            
+
             Destroy();
         }
     }

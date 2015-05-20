@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using OpenTK;
+using Rectangle = OpenTK.Box2;
 
 namespace COG.GUI
 {

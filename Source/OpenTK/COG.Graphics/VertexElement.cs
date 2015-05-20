@@ -1,7 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
+using OpenTK;
+using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL4;
 
 namespace COG.Graphics
@@ -72,7 +75,7 @@ namespace COG.Graphics
                 case VertexAttribPointerType.Short: return typeCount * sizeof(short);
                 case VertexAttribPointerType.Float: return typeCount * sizeof(float);
                 case VertexAttribPointerType.Double: return typeCount * sizeof(double);
-            } 
+            }
 
             throw new NotSupportedException();
         }
@@ -226,5 +229,72 @@ namespace COG.Graphics
         }
     }
 
+
+    //public interface IVertex
+    //{
+    //    VertexDeclaration Declaration { get; }
+    //    float this[int index] { get; }
+    //    int Length { get; }
+    //}
+
+    //[StructLayout(LayoutKind.Sequential, Pack = 1)]
+    //public struct VertexPositionColor : IVertex
+    //{
+    //    public static readonly VertexDeclaration VertexDeclaration;
+
+    //    static VertexPositionColor()
+    //    {
+    //        VertexElement[] elements = new VertexElement[] {
+    //            new VertexElement(3, VertexAttribPointerType.Float, VertexElementSemantic.Position), 
+    //            new VertexElement(4, VertexAttribPointerType.Float, VertexElementSemantic.Color) };
+    //        VertexDeclaration declaration = new VertexDeclaration(elements);
+    //        VertexDeclaration = declaration;
+    //    }
+
+    //    public Vector3 Position;
+    //    public Color4 Color;
+
+    //    public VertexPositionColor(Vector3 position, Color4 color)
+    //    {
+    //        Position = position;
+    //        Color = color;
+    //    }
+
+    //    public VertexDeclaration Declaration { get { return VertexDeclaration; } }
+    //    public int Length { get { return 5; } }
+    //    public float this[int index]
+    //    {
+    //        switch()
+    //    }
+
+    //}
+
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
+    public struct VertexPositionTextureColor
+    {
+        public static readonly VertexDeclaration VertexDeclaration;
+
+        static VertexPositionTextureColor()
+        {
+            VertexElement[] elements = new VertexElement[] {
+                new VertexElement(3, VertexAttribPointerType.Float, VertexElementSemantic.Position), 
+                new VertexElement(4, VertexAttribPointerType.Float, VertexElementSemantic.Color),
+                new VertexElement(2, VertexAttribPointerType.Float, VertexElementSemantic.Texture)
+            };
+            VertexDeclaration declaration = new VertexDeclaration(elements);
+            VertexDeclaration = declaration;
+        }
+
+        public Vector3 Position;
+        public Color4 Color;
+        public Vector2 Texture;
+
+        public VertexPositionTextureColor(Vector3 position, Color4 color)
+        {
+            Position = position;
+            Texture = Vector2.Zero;
+            Color = color;
+        }
+    }
 
 }

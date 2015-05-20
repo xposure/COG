@@ -24,45 +24,52 @@ namespace COG.Dredger.States
             vertexArrayID = GL.GenVertexArray();
             GL.BindVertexArray(vertexArrayID);
 
+
             // Our vertices. Tree consecutive floats give a 3D vertex; Three consecutive vertices give a triangle.
             // A cube has 6 faces with 2 triangles each, so this makes 6*2=12 triangles, and 12*3 vertices
             var g_all_buffer_data = new[] {
-                    -1.0f,-1.0f,-1.0f, // triangle 1 : begin
-                    -1.0f,-1.0f, 1.0f,
-                    -1.0f, 1.0f, 1.0f, // triangle 1 : end
-                    1.0f, 1.0f,-1.0f, // triangle 2 : begin
-                    -1.0f,-1.0f,-1.0f,
-                    -1.0f, 1.0f,-1.0f, // triangle 2 : end
+                    -1.0f,-1.0f,-1.0f, // triangle 1 : begin  //bl
+                    -1.0f,-1.0f, 1.0f,                        //    
+                    -1.0f, 1.0f, 1.0f, // triangle 1 : end    //
+                    1.0f, 1.0f,-1.0f, // triangle 2 : begin   //
+                    -1.0f,-1.0f,-1.0f,                        //
+                    -1.0f, 1.0f,-1.0f, // triangle 2 : end    //
+
                     1.0f,-1.0f, 1.0f,
                     -1.0f,-1.0f,-1.0f,
                     1.0f,-1.0f,-1.0f,
                     1.0f, 1.0f,-1.0f,
                     1.0f,-1.0f,-1.0f,
                     -1.0f,-1.0f,-1.0f,
+                    
                     -1.0f,-1.0f,-1.0f,
                     -1.0f, 1.0f, 1.0f,
                     -1.0f, 1.0f,-1.0f,
                     1.0f,-1.0f, 1.0f,
                     -1.0f,-1.0f, 1.0f,
                     -1.0f,-1.0f,-1.0f,
+                    
                     -1.0f, 1.0f, 1.0f,
                     -1.0f,-1.0f, 1.0f,
                     1.0f,-1.0f, 1.0f,
                     1.0f, 1.0f, 1.0f,
-                    1.0f,-1.0f,-1.0f,
+                    1.0f,-1.0f,-1.0f,                    
                     1.0f, 1.0f,-1.0f,
+                    
                     1.0f,-1.0f,-1.0f,
                     1.0f, 1.0f, 1.0f,
                     1.0f,-1.0f, 1.0f,
                     1.0f, 1.0f, 1.0f,
                     1.0f, 1.0f,-1.0f,
                     -1.0f, 1.0f,-1.0f,
+                    
                     1.0f, 1.0f, 1.0f,
                     -1.0f, 1.0f,-1.0f,
                     -1.0f, 1.0f, 1.0f,
                     1.0f, 1.0f, 1.0f,
                     -1.0f, 1.0f, 1.0f,
                     1.0f,-1.0f, 1.0f,
+                    
                     0.000059f, 1.0f-0.000004f,
                     0.000103f, 1.0f-0.336048f,
                     0.335973f, 1.0f-0.335903f,
@@ -108,6 +115,18 @@ namespace COG.Dredger.States
 
             m_mesh = new DynamicMesh(decl);
             m_mesh.Begin();
+
+
+            //m_mesh.Position(-1, 1, 0);
+            //m_mesh.TextureCoord(0, 0);
+            //m_mesh.Position(1, 1, 0);
+            //m_mesh.TextureCoord(1, 0);
+            //m_mesh.Position(1, -1, 0);
+            //m_mesh.TextureCoord(1, 1);
+            //m_mesh.Position(-1, -1, 0);
+            //m_mesh.TextureCoord(0, 1);
+
+            //m_mesh.Quad(0, 1, 2, 3);
             for (var i = 0; i < 36; i++)
             {
                 var index = i * 5;
@@ -117,12 +136,14 @@ namespace COG.Dredger.States
                 m_mesh.Position(g_all_buffer_data[vindex], g_all_buffer_data[vindex + 1], g_all_buffer_data[vindex + 2]);
                 m_mesh.TextureCoord(g_all_buffer_data[uindex], g_all_buffer_data[uindex + 1]);
 
- 
+
+
             }
+
 
             m_mesh.End(BufferUsageHint.StaticDraw);
 
-        
+
 
 
             GL.ClearColor(1f, 1f, 1f, 1f);
@@ -156,7 +177,6 @@ namespace COG.Dredger.States
             GL.Enable(EnableCap.DepthTest);
             // Accept fragment if it closer to the camera than the former one
             GL.DepthFunc(DepthFunction.Less);
-            //Console.WriteLine("render");
 
             GL.Clear(ClearBufferMask.DepthBufferBit | ClearBufferMask.ColorBufferBit);
 
@@ -189,7 +209,7 @@ namespace COG.Dredger.States
             m_texture.Bind();
 
             m_mesh.Render();
-    
+
 
         }
 
