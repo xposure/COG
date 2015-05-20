@@ -45,9 +45,9 @@ using COG.Framework;
 
 #endregion Namespace Declarations
 
-namespace COG.Math
+namespace OpenTK
 {
-    public sealed class Utility
+    public static class Utility
     {
         public static readonly Real PIOverTwo = (Real)(System.Math.PI / 2f);
         public static readonly Real PIOverFour = (Real)(System.Math.PI / 4f);
@@ -75,28 +75,25 @@ namespace COG.Math
         /// </summary>
         static Utility() { }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        private Utility() { }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="aabb"></param>
-        /// <returns></returns>
-        public static Real BoundingRadiusFromAABB(AxisAlignedBox3 aabb)
-        {
-            Vector3 max = aabb.Maximum;
-            Vector3 min = aabb.Minimum;
 
-            Vector3 magnitude = max;
-            magnitude.Ceil(-max);
-            magnitude.Ceil(min);
-            magnitude.Ceil(-min);
+        ///// <summary>
+        ///// 
+        ///// </summary>
+        ///// <param name="aabb"></param>
+        ///// <returns></returns>
+        //public static Real BoundingRadiusFromAABB(AxisAlignedBox3 aabb)
+        //{
+        //    Vector3 max = aabb.Maximum;
+        //    Vector3 min = aabb.Minimum;
 
-            return magnitude.Length;
-        }
+        //    Vector3 magnitude = max;
+        //    magnitude.Ceil(-max);
+        //    magnitude.Ceil(min);
+        //    magnitude.Ceil(-min);
+
+        //    return magnitude.Length;
+        //}
 
         /// <summary>
         ///		Converts radians to degrees.
@@ -660,164 +657,164 @@ namespace COG.Math
 
         #region Intersection Methods
 
-        /// <summary>
-        ///    Tests an intersection between a ray and a box.
-        /// </summary>
-        /// <param name="ray"></param>
-        /// <param name="box"></param>
-        /// <returns>A Pair object containing whether the intersection occurred, and the distance between the 2 objects.</returns>
-        public static IntersectResult Intersects(Ray3 ray, AxisAlignedBox3 box)
-        {
-            Contract.RequiresNotNull(ray, "ray");
-            Contract.RequiresNotNull(box, "box");
+        ///// <summary>
+        /////    Tests an intersection between a ray and a box.
+        ///// </summary>
+        ///// <param name="ray"></param>
+        ///// <param name="box"></param>
+        ///// <returns>A Pair object containing whether the intersection occurred, and the distance between the 2 objects.</returns>
+        //public static IntersectResult Intersects(Ray3 ray, AxisAlignedBox3 box)
+        //{
+        //    Contract.RequiresNotNull(ray, "ray");
+        //    Contract.RequiresNotNull(box, "box");
 
-            if (box.IsNull)
-            {
-                return new IntersectResult(false, 0);
-            }
+        //    if (box.IsNull)
+        //    {
+        //        return new IntersectResult(false, 0);
+        //    }
 
-            if (box.IsInfinite)
-            {
-                return new IntersectResult(true, 0);
-            }
+        //    if (box.IsInfinite)
+        //    {
+        //        return new IntersectResult(true, 0);
+        //    }
 
-            Real lowt = 0.0f;
-            Real t;
-            bool hit = false;
-            Vector3 hitPoint;
-            Vector3 min = box.Minimum;
-            Vector3 max = box.Maximum;
+        //    Real lowt = 0.0f;
+        //    Real t;
+        //    bool hit = false;
+        //    Vector3 hitPoint;
+        //    Vector3 min = box.Minimum;
+        //    Vector3 max = box.Maximum;
 
-            // check origin inside first
-            if (ray.origin > min && ray.origin < max)
-            {
-                return new IntersectResult(true, 0.0f);
-            }
+        //    // check origin inside first
+        //    if (ray.origin > min && ray.origin < max)
+        //    {
+        //        return new IntersectResult(true, 0.0f);
+        //    }
 
-            // check each face in turn, only check closest 3
+        //    // check each face in turn, only check closest 3
 
-            // Min X
-            if (ray.origin.X <= min.X && ray.direction.X > 0)
-            {
-                t = (min.X - ray.origin.X) / ray.direction.X;
+        //    // Min X
+        //    if (ray.origin.X <= min.X && ray.direction.X > 0)
+        //    {
+        //        t = (min.X - ray.origin.X) / ray.direction.X;
 
-                if (t >= 0)
-                {
-                    // substitue t back into ray and check bounds and distance
-                    hitPoint = ray.origin + ray.direction * t;
+        //        if (t >= 0)
+        //        {
+        //            // substitue t back into ray and check bounds and distance
+        //            hitPoint = ray.origin + ray.direction * t;
 
-                    if (hitPoint.Y >= min.Y && hitPoint.Y <= max.Y &&
-                        hitPoint.Z >= min.Z && hitPoint.Z <= max.Z &&
-                        (!hit || t < lowt))
-                    {
-                        hit = true;
-                        lowt = t;
-                    }
-                }
-            }
+        //            if (hitPoint.Y >= min.Y && hitPoint.Y <= max.Y &&
+        //                hitPoint.Z >= min.Z && hitPoint.Z <= max.Z &&
+        //                (!hit || t < lowt))
+        //            {
+        //                hit = true;
+        //                lowt = t;
+        //            }
+        //        }
+        //    }
 
-            // Max X
-            if (ray.origin.X >= max.X && ray.direction.X < 0)
-            {
-                t = (max.X - ray.origin.X) / ray.direction.X;
+        //    // Max X
+        //    if (ray.origin.X >= max.X && ray.direction.X < 0)
+        //    {
+        //        t = (max.X - ray.origin.X) / ray.direction.X;
 
-                if (t >= 0)
-                {
-                    // substitue t back into ray and check bounds and distance
-                    hitPoint = ray.origin + ray.direction * t;
+        //        if (t >= 0)
+        //        {
+        //            // substitue t back into ray and check bounds and distance
+        //            hitPoint = ray.origin + ray.direction * t;
 
-                    if (hitPoint.Y >= min.Y && hitPoint.Y <= max.Y &&
-                        hitPoint.Z >= min.Z && hitPoint.Z <= max.Z &&
-                        (!hit || t < lowt))
-                    {
-                        hit = true;
-                        lowt = t;
-                    }
-                }
-            }
+        //            if (hitPoint.Y >= min.Y && hitPoint.Y <= max.Y &&
+        //                hitPoint.Z >= min.Z && hitPoint.Z <= max.Z &&
+        //                (!hit || t < lowt))
+        //            {
+        //                hit = true;
+        //                lowt = t;
+        //            }
+        //        }
+        //    }
 
-            // Min Y
-            if (ray.origin.Y <= min.Y && ray.direction.Y > 0)
-            {
-                t = (min.Y - ray.origin.Y) / ray.direction.Y;
+        //    // Min Y
+        //    if (ray.origin.Y <= min.Y && ray.direction.Y > 0)
+        //    {
+        //        t = (min.Y - ray.origin.Y) / ray.direction.Y;
 
-                if (t >= 0)
-                {
-                    // substitue t back into ray and check bounds and distance
-                    hitPoint = ray.origin + ray.direction * t;
+        //        if (t >= 0)
+        //        {
+        //            // substitue t back into ray and check bounds and distance
+        //            hitPoint = ray.origin + ray.direction * t;
 
-                    if (hitPoint.X >= min.X && hitPoint.X <= max.X &&
-                        hitPoint.Z >= min.Z && hitPoint.Z <= max.Z &&
-                        (!hit || t < lowt))
-                    {
-                        hit = true;
-                        lowt = t;
-                    }
-                }
-            }
+        //            if (hitPoint.X >= min.X && hitPoint.X <= max.X &&
+        //                hitPoint.Z >= min.Z && hitPoint.Z <= max.Z &&
+        //                (!hit || t < lowt))
+        //            {
+        //                hit = true;
+        //                lowt = t;
+        //            }
+        //        }
+        //    }
 
-            // Max Y
-            if (ray.origin.Y >= max.Y && ray.direction.Y < 0)
-            {
-                t = (max.Y - ray.origin.Y) / ray.direction.Y;
+        //    // Max Y
+        //    if (ray.origin.Y >= max.Y && ray.direction.Y < 0)
+        //    {
+        //        t = (max.Y - ray.origin.Y) / ray.direction.Y;
 
-                if (t >= 0)
-                {
-                    // substitue t back into ray and check bounds and distance
-                    hitPoint = ray.origin + ray.direction * t;
+        //        if (t >= 0)
+        //        {
+        //            // substitue t back into ray and check bounds and distance
+        //            hitPoint = ray.origin + ray.direction * t;
 
-                    if (hitPoint.X >= min.X && hitPoint.X <= max.X &&
-                        hitPoint.Z >= min.Z && hitPoint.Z <= max.Z &&
-                        (!hit || t < lowt))
-                    {
-                        hit = true;
-                        lowt = t;
-                    }
-                }
-            }
+        //            if (hitPoint.X >= min.X && hitPoint.X <= max.X &&
+        //                hitPoint.Z >= min.Z && hitPoint.Z <= max.Z &&
+        //                (!hit || t < lowt))
+        //            {
+        //                hit = true;
+        //                lowt = t;
+        //            }
+        //        }
+        //    }
 
-            // Min Z
-            if (ray.origin.Z <= min.Z && ray.direction.Z > 0)
-            {
-                t = (min.Z - ray.origin.Z) / ray.direction.Z;
+        //    // Min Z
+        //    if (ray.origin.Z <= min.Z && ray.direction.Z > 0)
+        //    {
+        //        t = (min.Z - ray.origin.Z) / ray.direction.Z;
 
-                if (t >= 0)
-                {
-                    // substitue t back into ray and check bounds and distance
-                    hitPoint = ray.origin + ray.direction * t;
+        //        if (t >= 0)
+        //        {
+        //            // substitue t back into ray and check bounds and distance
+        //            hitPoint = ray.origin + ray.direction * t;
 
-                    if (hitPoint.X >= min.X && hitPoint.X <= max.X &&
-                        hitPoint.Y >= min.Y && hitPoint.Y <= max.Y &&
-                        (!hit || t < lowt))
-                    {
-                        hit = true;
-                        lowt = t;
-                    }
-                }
-            }
+        //            if (hitPoint.X >= min.X && hitPoint.X <= max.X &&
+        //                hitPoint.Y >= min.Y && hitPoint.Y <= max.Y &&
+        //                (!hit || t < lowt))
+        //            {
+        //                hit = true;
+        //                lowt = t;
+        //            }
+        //        }
+        //    }
 
-            // Max Z
-            if (ray.origin.Z >= max.Z && ray.direction.Z < 0)
-            {
-                t = (max.Z - ray.origin.Z) / ray.direction.Z;
+        //    // Max Z
+        //    if (ray.origin.Z >= max.Z && ray.direction.Z < 0)
+        //    {
+        //        t = (max.Z - ray.origin.Z) / ray.direction.Z;
 
-                if (t >= 0)
-                {
-                    // substitue t back into ray and check bounds and distance
-                    hitPoint = ray.origin + ray.direction * t;
+        //        if (t >= 0)
+        //        {
+        //            // substitue t back into ray and check bounds and distance
+        //            hitPoint = ray.origin + ray.direction * t;
 
-                    if (hitPoint.X >= min.X && hitPoint.X <= max.X &&
-                        hitPoint.Y >= min.Y && hitPoint.Y <= max.Y &&
-                        (!hit || t < lowt))
-                    {
-                        hit = true;
-                        lowt = t;
-                    }
-                }
-            }
+        //            if (hitPoint.X >= min.X && hitPoint.X <= max.X &&
+        //                hitPoint.Y >= min.Y && hitPoint.Y <= max.Y &&
+        //                (!hit || t < lowt))
+        //            {
+        //                hit = true;
+        //                lowt = t;
+        //            }
+        //        }
+        //    }
 
-            return new IntersectResult(hit, lowt);
-        }
+        //    return new IntersectResult(hit, lowt);
+        //}
 
         public static IntersectResult Intersects(Ray3 ray, Vector3 a,
                                                   Vector3 b, Vector3 c, Vector3 normal, bool positiveSide, bool negativeSide)
@@ -1845,7 +1842,7 @@ namespace COG.Math
             if (size.X <= targetSize.X && size.Y <= targetSize.Y)
                 return size;
 
-            var ratio = targetSize / size;
+            var ratio = Vector2.Divide(targetSize , size);
             if (ratio.X > ratio.Y)
                 size *= ratio.Y;
             else
@@ -2146,6 +2143,22 @@ namespace COG.Math
             }
             // a is sorted 
         }
+
+        public static float Dot(this Vector3 left, Vector3 right)
+        {
+            return Vector3.Dot(left, right);
+        }
+
+        public static Vector3 Cross(this Vector3 left, Vector3 right)
+        {
+            return Vector3.Cross(left, right);
+        }
+
+        public static float Dot(this Vector2 left, Vector2 right)
+        {
+            return Vector2.Dot(left, right);
+        }
+
     }
 
     public interface IRadixKey

@@ -33,7 +33,7 @@ using System.Collections.Generic;
 
 #endregion Namespace Declarations
 
-namespace COG.Math
+namespace OpenTK
 {
     
     /// <summary>

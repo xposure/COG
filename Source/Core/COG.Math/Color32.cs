@@ -44,7 +44,7 @@ using COG.Framework;
 
 #endregion Namespace Declarations
 
-namespace COG.Math
+namespace OpenTK
 {
     /// <summary>
     ///		This class is necessary so we can store the color components as floating

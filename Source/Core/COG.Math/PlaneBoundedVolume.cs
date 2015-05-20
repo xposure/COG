@@ -47,7 +47,7 @@
 
 //#endregion Namespace Declarations
 
-//namespace COG.Math
+//namespace OpenTK
 //{
 //    /// <summary>
 //    ///		Represents a convex volume bounded by planes.

@@ -4,7 +4,7 @@ using System.Globalization;
 using System.ComponentModel;
 using System.Runtime.Serialization;
 
-namespace COG.Math
+namespace OpenTK
 {
     public struct Rectangle : IEquatable<Rectangle>
     {

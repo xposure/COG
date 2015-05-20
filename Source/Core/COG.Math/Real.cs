@@ -51,7 +51,7 @@ using System.Security.Permissions;
 
 #endregion Namespace Declarations
 
-namespace COG.Math
+namespace OpenTK
 {
 	/// <summary>
 	/// a floating point number abstraction allows the use of either a single-precision or double-precision floating point number

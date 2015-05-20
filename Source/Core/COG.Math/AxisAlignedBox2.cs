@@ -48,7 +48,7 @@ using System.Diagnostics;
 
 #endregion Namespace Declarations
 
-namespace COG.Math
+namespace OpenTK
 {
     /// <summary>
     ///		A 3D box aligned with the x/y/z axes.
@@ -360,8 +360,8 @@ namespace COG.Math
                         axis.edge = new Vector2(overlap.X1, overlap.Y1) - new Vector2(overlap.X0, overlap.Y1);
                 }
 
-                axis.unit = axis.edge.Perpendicular;
-                axis.normal = axis.unit.ToNormalized();
+                axis.unit = axis.edge.PerpendicularRight;
+                axis.normal = axis.unit.Normalized();
                 return new MinimumTranslationVector(axis, minOverlap);
             }
             return MinimumTranslationVector.Zero;
@@ -382,8 +382,8 @@ namespace COG.Math
                 else
                     axis.edge = new Vector2(overlap.X1, overlap.Y1) - new Vector2(overlap.X1, overlap.Y0);
 
-                axis.unit = axis.edge.Perpendicular;
-                axis.normal = axis.unit.ToNormalized();
+                axis.unit = axis.edge.PerpendicularRight;
+                axis.normal = axis.unit.Normalized();
                 return new MinimumTranslationVector(axis, minOverlap);
             }
             return MinimumTranslationVector.Zero;
@@ -404,8 +404,8 @@ namespace COG.Math
                 else
                     axis.edge = new Vector2(overlap.X1, overlap.Y1) - new Vector2(overlap.X0, overlap.Y1);
 
-                axis.unit = axis.edge.Perpendicular;
-                axis.normal = axis.unit.ToNormalized();
+                axis.unit = axis.edge.PerpendicularRight;
+                axis.normal = axis.unit.Normalized();
                 return new MinimumTranslationVector(axis, minOverlap);
             }
             return MinimumTranslationVector.Zero;
@@ -815,41 +815,41 @@ namespace COG.Math
 
 
 
-        public void RotateAndContain(Vector2 pivot, Real r)
-        {
-            if (!isNull && !isInfinite && r != 0)
-            {
-                var rotatedCorners = this.ToOBB(pivot, r);
-                var center = (rotatedCorners[0] + rotatedCorners[1] + rotatedCorners[2] + rotatedCorners[3]) / 4f;
-                this.m_minVector = center;
-                this.m_maxVector = center;
-                UpdateCorners();
+        //public void RotateAndContain(Vector2 pivot, Real r)
+        //{
+        //    if (!isNull && !isInfinite && r != 0)
+        //    {
+        //        var rotatedCorners = this.ToOBB(pivot, r);
+        //        var center = (rotatedCorners[0] + rotatedCorners[1] + rotatedCorners[2] + rotatedCorners[3]) / 4f;
+        //        this.m_minVector = center;
+        //        this.m_maxVector = center;
+        //        UpdateCorners();
 
-                this.Merge(rotatedCorners[0]);
-                this.Merge(rotatedCorners[1]);
-                this.Merge(rotatedCorners[2]);
-                this.Merge(rotatedCorners[3]);
-            }
-        }
+        //        this.Merge(rotatedCorners[0]);
+        //        this.Merge(rotatedCorners[1]);
+        //        this.Merge(rotatedCorners[2]);
+        //        this.Merge(rotatedCorners[3]);
+        //    }
+        //}
 
         public Rectangle ToRect()
         {
             return new Rectangle((int)minVector.X, (int)minVector.Y, (int)Width, (int)Height);
         }
 
-        public Vector2[] ToOBB(Vector2 pivot, Real r)
-        {
-            if (!isNull && !isInfinite && r != 0)
-            {
-                var rotatedCorners = new Vector2[4];
-                for (var i = 0; i < corners.Length; i++)
-                {
-                    rotatedCorners[i] = corners[i].Rotate(pivot, r);
-                }
-                return rotatedCorners;
-            }
-            return corners;
-        }
+        //public Vector2[] ToOBB(Vector2 pivot, Real r)
+        //{
+        //    if (!isNull && !isInfinite && r != 0)
+        //    {
+        //        var rotatedCorners = new Vector2[4];
+        //        for (var i = 0; i < corners.Length; i++)
+        //        {
+        //            rotatedCorners[i] = corners[i].Rotate(pivot, r);
+        //        }
+        //        return rotatedCorners;
+        //    }
+        //    return corners;
+        //}
 
         //public Rectangle ToRect()
         //{

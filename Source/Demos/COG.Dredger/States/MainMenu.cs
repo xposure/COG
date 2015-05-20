@@ -101,7 +101,7 @@ namespace COG.Dredger.States
                 var p = m_particles[i];
                 var sprite = Sprite.Create(texture, p.position.X, p.position.Y, p.position.X + p.size.X, p.position.Y - p.size.Y);
                 sprite.SetDepth(p.position.Z);
-                sprite.SetColor(new Math.Color(p.life, 0.5f, 0.5f, 0.5f));
+                sprite.SetColor(new Color(p.life, 0.5f, 0.5f, 0.5f));
 
                 m_renderer.AddQuad(sprite);
             }
@@ -303,25 +303,20 @@ namespace COG.Dredger.States
 
             // Projection matrix : 45° Field of View, 4:3 ratio, display range : 0.1 unit <-> 100 units
             var Projection = Matrix4.CreatePerspectiveFieldOfView(0.785398163f, 4.0f / 3.0f, 0.1f, 100.0f);
-            var Projection2 = Math.Matrix4.CreatePerspectiveFieldOfView(0.785398163f, 4.0f / 3.0f, 0.1f, 100.0f);
             // Camera matrix
             var View = Matrix4.LookAt(
                     new Vector3(4, 3, 3), // Camera is at (4,3,3), in world space
                     new Vector3(0, 0, 0), // and looks at the origin
                     new Vector3(0, 1, 0) // head is up (set to 0,-1,0 to look upside-down
                 );
-            var View2 = Math.Matrix4.CreateLookAt(new Math.Vector3(4, 3, 3), Math.Vector3.Zero, Math.Vector3.UnitY);
             // Model matrix : an identity matrix (model will be at the origin)
             var Model = Matrix4.CreateRotationY((float)rotation);
-            var Model2 = Math.Matrix4.CreateRotationY((float)rotation);
             //var Model = Matrix4.Identity;
             // Our ModelViewProjection : multiplication of our 3 matrices
 
             var MVP = Projection * View * Model;
             MVP = Model * View * Projection;
 
-            var MVP2 = Projection2 * View2 * Model2;
-            MVP2 = Model2 * View2 * Projection2;
 
 
             //Console.WriteLine(Projection);
@@ -343,7 +338,7 @@ namespace COG.Dredger.States
             // For each model you render, since the MVP will be different (at least the M part)
             //GL.UseProgram(programID);
             m_program.Bind();
-            m_program.SetUniformMatrix4("MVP", MVP2);
+            m_program.SetUniformMatrix4("MVP", MVP);
             //GL.UniformMatrix4(MatrixID, false, ref MVP);
             //GL.Uniform1()
 
@@ -356,10 +351,10 @@ namespace COG.Dredger.States
             //GL.UniformMatrix4(MatrixID, false, ref MVP);
             //MatrixID = GL.GetUniformLocation(m_spriteProgram.ProgramID, "MVP");
             m_spriteProgram.Bind();
-            m_spriteProgram.SetUniformMatrix4("MVP", MVP2);
+            m_spriteProgram.SetUniformMatrix4("MVP", MVP);
 
             var sprite1 = Sprite.Create(m_texture, -1, 1, 1, -1);
-            sprite1.SetColor(COG.Math.Color.White);
+            sprite1.SetColor(Color.White);
 
             //m_spriteRenderer.AddQuad(sprite1);
             //m_spriteRenderer.Render();

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Runtime.Serialization;
 
-namespace COG.Math
+namespace OpenTK
 {
     public struct Point : IEquatable<Point>
     {

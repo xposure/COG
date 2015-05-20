@@ -44,7 +44,7 @@ using System.Diagnostics;
 
 #endregion Namespace Declarations
 
-namespace COG.Math
+namespace OpenTK
 {
     /// <summary>
     ///		A 3D box aligned with the x/y/z axes.
@@ -108,13 +108,13 @@ namespace COG.Math
             Vector3 max;
             Vector3 temp;
 
-            temp = matrix * corners[0];
+            temp = Vector3.Transform(corners[0], matrix);
             min = max = temp;
 
             for (int i = 1; i < corners.Length; i++)
             {
                 // Transform and check extents
-                temp = matrix * corners[i];
+                temp = Vector3.Transform(corners[i], matrix);
 
                 if (temp.X > max.X)
                     max.X = temp.X;
@@ -229,8 +229,8 @@ namespace COG.Math
             }
             else if (!this.IsInfinite)
             {
-                minVector.Floor(box.Minimum);
-                maxVector.Ceil(box.Maximum);
+                minVector = Vector3.Min(minVector, box.minVector);
+                maxVector = Vector3.Max(maxVector, box.maxVector);
 
                 UpdateCorners();
             }
@@ -414,7 +414,7 @@ namespace COG.Math
                     return Vector3.Zero;
 
                 if (isInfinite)
-                    return Vector3.PositiveInfinity;
+                    return new Vector3(float.PositiveInfinity);
 
                 return (Maximum - Minimum) * 0.5f;
             }

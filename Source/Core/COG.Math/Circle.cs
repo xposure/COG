@@ -47,7 +47,7 @@ using System;
 
 #endregion Namespace Declarations
 
-namespace COG.Math
+namespace OpenTK
 {
     /// <summary>
     ///		A standard Circle, used mostly for bounds checking.

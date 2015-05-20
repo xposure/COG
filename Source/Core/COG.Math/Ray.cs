@@ -49,7 +49,7 @@ using System;
 
 #endregion Namespace Declarations
 
-namespace COG.Math
+namespace OpenTK
 {
     /// <summary>
     /// 	Representation of a ray in space, ie a line with an origin and direction.
@@ -71,7 +71,7 @@ namespace COG.Math
         public Ray2()
         {
             origin = Vector2.Zero;
-            direction = Vector2.forward;
+            direction = Vector2.UnitX;
         }
 
         /// <summary>

@@ -48,7 +48,7 @@ using System.Runtime.Serialization;
 using System.Security.Permissions;
 
 #endregion Namespace Declarations
-namespace COG.Math
+namespace OpenTK
 {
     /// <summary>
     /// Wrapper class which indicates a given angle value is in Radians.

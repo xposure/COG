@@ -48,7 +48,7 @@ using COG.Framework;
 
 #endregion Namespace Declarations
 
-namespace COG.Math
+namespace OpenTK
 {
 	abstract public class Spline<T>
 	{

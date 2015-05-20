@@ -47,7 +47,7 @@ using System;
 
 #endregion Namespace Declarations
 
-namespace COG.Math
+namespace OpenTK
 {
 	/// <summary>
 	///    Type of intersection detected between 2 object.

@@ -49,7 +49,7 @@ using System.Collections;
 
 #endregion Namespace Declarations
 
-namespace COG.Math
+namespace OpenTK
 {
     /// <summary>
     /// 	Representation of a ray in space, ie a line with an origin and direction.
@@ -110,18 +110,18 @@ namespace COG.Math
 
         #region Intersection Methods
 
-        /// <summary>
-        ///    Tests whether this ray intersects the given box.
-        /// </summary>
-        /// <param name="box"></param>
-        /// <returns>
-        ///		Struct containing info on whether there was a hit, and the distance from the 
-        ///		origin of this ray where the intersect happened.
-        ///	</returns>
-        public IntersectResult Intersects(AxisAlignedBox3 box)
-        {
-            return Utility.Intersects(this, box);
-        }
+        ///// <summary>
+        /////    Tests whether this ray intersects the given box.
+        ///// </summary>
+        ///// <param name="box"></param>
+        ///// <returns>
+        /////		Struct containing info on whether there was a hit, and the distance from the 
+        /////		origin of this ray where the intersect happened.
+        /////	</returns>
+        //public IntersectResult Intersects(AxisAlignedBox3 box)
+        //{
+        //    return Utility.Intersects(this, box);
+        //}
 
         /// <summary>
         ///		Tests whether this ray intersects the given plane. 

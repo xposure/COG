@@ -6,6 +6,7 @@ using System.Text;
 using COG.Assets;
 using COG.Framework;
 using COG.Logging;
+using OpenTK;
 using OpenTK.Graphics.OpenGL4;
 
 namespace COG.Graphics
@@ -285,32 +286,7 @@ namespace COG.Graphics
             return null;
         }
 
-        public bool SetUniformMatrix4(string name, Math.Matrix4 matrix)
-        {
-            var uniform = GetUniform(name);
-            if (uniform == null)
-            {
-                g_logger.warn("{0} uniform {1} doesn't exist.", m_uri, name);
-                return false;
-            }
-
-            if (uniform.Semantic != VertexUniformSemantic.Matrix4)
-            {
-                g_logger.warn("{0} uniform {1} is not a Matrix4.", m_uri, name);
-                return false;
-            }
-
-            this.Bind();
-
-            var data = new float[4 * 4];
-            matrix.MakeFloatArray(data);
-
-
-            GL.UniformMatrix4(uniform.Location, 1, false, data);
-            return true;
-        }
-
-        public bool SetUniformMatrix4(string name, OpenTK.Matrix4 matrix)
+        public bool SetUniformMatrix4(string name, Matrix4 matrix)
         {
             var uniform = GetUniform(name);
             if (uniform == null)

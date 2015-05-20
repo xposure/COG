@@ -2,7 +2,7 @@
 using System.Diagnostics;
 using System.Globalization;
 
-namespace COG.Math
+namespace OpenTK
 {
     public struct Vector3i : IComparable<Vector3i>, IEquatable<Vector3i>
     {

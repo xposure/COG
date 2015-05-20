@@ -4,7 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using COG.Framework;
-using COG.Math;
+using OpenTK;
 using OpenTK.Graphics.OpenGL4;
 //using OpenTK;
 //using Rectangle = OpenTK.Box2;
