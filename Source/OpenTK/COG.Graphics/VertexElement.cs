@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
-using OpenTK;
+using COG.Math;
 using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL4;
 
@@ -286,10 +286,10 @@ namespace COG.Graphics
         }
 
         public Vector3 Position;
-        public Color4 Color;
+        public Color Color;
         public Vector2 Texture;
 
-        public VertexPositionTextureColor(Vector3 position, Color4 color)
+        public VertexPositionTextureColor(Vector3 position, Color color)
         {
             Position = position;
             Texture = Vector2.Zero;

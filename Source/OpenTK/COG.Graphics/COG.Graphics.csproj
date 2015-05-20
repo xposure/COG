@@ -35,14 +35,21 @@
     <Reference Include="System" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AxisAlignedBox2.cs" />
     <Compile Include="DynamicMesh.cs" />
     <Compile Include="Extensions.cs" />
     <Compile Include="GeometryBatch.cs" />
     <Compile Include="IMRenderer.cs" />
+    <Compile Include="Point.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Rectangle.cs" />
+    <Compile Include="RectOffset.cs" />
+    <Compile Include="Size.cs" />
     <Compile Include="SpriteRenderer.cs" />
+    <Compile Include="StreamMesh.cs" />
     <Compile Include="Texture.cs" />
+    <Compile Include="Utility.cs" />
     <Compile Include="VertexElement.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -57,6 +64,10 @@
     <ProjectReference Include="..\..\Core\COG.Logging\COG.Logging.csproj">
       <Project>{923ab1d5-796c-4156-9021-76f4e4f90ced}</Project>
       <Name>COG.Logging</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Core\COG.Math\COG.Math.csproj">
+      <Project>{93ae5494-d768-4967-8cbc-10df52ca1f60}</Project>
+      <Name>COG.Math</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

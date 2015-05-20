@@ -9,7 +9,9 @@ namespace COG.Dredger.States
     public class MainMenu : GameState
     {
         private Texture2D m_texture;
+        private SpriteRenderer m_spriteRenderer;
         private Program m_program;
+        private Program m_spriteProgram;
 
         private int vertexArrayID;
         private DynamicMesh m_mesh;
@@ -17,13 +19,31 @@ namespace COG.Dredger.States
         public override void LoadResources()
         {
             base.LoadResources();
-            m_texture = m_engine.Assets.LoadAsset<Texture2D, TextureData2D>("dredger:texture:uvtemplate");
-            m_program = m_engine.Assets.LoadAsset<Program, ProgramData>("dredger:program:simple");
+            m_spriteRenderer = new SpriteRenderer();
 
+            m_texture = m_engine.Assets.LoadTexture("dredger:texture:uvtemplate");
+            m_program = m_engine.Assets.LoadProgram("dredger:program:simple");
+            m_spriteProgram = m_engine.Assets.LoadProgram("dredger:program:sprite");
 
             vertexArrayID = GL.GenVertexArray();
             GL.BindVertexArray(vertexArrayID);
 
+
+
+            var decl = new VertexDeclaration();
+            decl.AddElement(3, VertexAttribPointerType.Float, VertexElementSemantic.Position);
+            decl.AddElement(2, VertexAttribPointerType.Float, VertexElementSemantic.Texture);
+
+            m_mesh = new DynamicMesh(decl);
+
+            GenerateCube();
+
+            GL.ClearColor(1f, 1f, 1f, 1f);
+        }
+
+
+        private void GenerateCube()
+        {
 
             // Our vertices. Tree consecutive floats give a 3D vertex; Three consecutive vertices give a triangle.
             // A cube has 6 faces with 2 triangles each, so this makes 6*2=12 triangles, and 12*3 vertices
@@ -109,24 +129,8 @@ namespace COG.Dredger.States
 
                 };
 
-            var decl = new VertexDeclaration();
-            decl.AddElement(3, VertexAttribPointerType.Float, VertexElementSemantic.Position);
-            decl.AddElement(2, VertexAttribPointerType.Float, VertexElementSemantic.Texture);
-
-            m_mesh = new DynamicMesh(decl);
             m_mesh.Begin();
 
-
-            //m_mesh.Position(-1, 1, 0);
-            //m_mesh.TextureCoord(0, 0);
-            //m_mesh.Position(1, 1, 0);
-            //m_mesh.TextureCoord(1, 0);
-            //m_mesh.Position(1, -1, 0);
-            //m_mesh.TextureCoord(1, 1);
-            //m_mesh.Position(-1, -1, 0);
-            //m_mesh.TextureCoord(0, 1);
-
-            //m_mesh.Quad(0, 1, 2, 3);
             for (var i = 0; i < 36; i++)
             {
                 var index = i * 5;
@@ -136,26 +140,20 @@ namespace COG.Dredger.States
                 m_mesh.Position(g_all_buffer_data[vindex], g_all_buffer_data[vindex + 1], g_all_buffer_data[vindex + 2]);
                 m_mesh.TextureCoord(g_all_buffer_data[uindex], g_all_buffer_data[uindex + 1]);
 
-
-
             }
 
-
             m_mesh.End(BufferUsageHint.StaticDraw);
-
-
-
-
-            GL.ClearColor(1f, 1f, 1f, 1f);
         }
 
         public override void UnloadResources()
         {
             base.UnloadResources();
 
+            m_spriteRenderer.Dispose();
             m_mesh.Dispose();
             m_texture.Dispose();
             m_program.Dispose();
+            m_spriteProgram.Dispose();
         }
 
         public override void Update(double dt)
@@ -172,7 +170,7 @@ namespace COG.Dredger.States
         private double rotation = 0;
         public override void Render(double dt)
         {
-
+            //GenerateCube();
             // Enable depth test
             GL.Enable(EnableCap.DepthTest);
             // Accept fragment if it closer to the camera than the former one
@@ -189,7 +187,7 @@ namespace COG.Dredger.States
                     new Vector3(0, 1, 0) // head is up (set to 0,-1,0 to look upside-down
                 );
             // Model matrix : an identity matrix (model will be at the origin)
-            var Model = Matrix4.CreateRotationY((float)rotation);
+            var Model =  Matrix4.CreateRotationY((float)rotation);
             // Our ModelViewProjection : multiplication of our 3 matrices
             var MVP = Projection * View * Model;
             MVP = Model * View * Projection;
@@ -198,6 +196,7 @@ namespace COG.Dredger.States
             // Only at initialisation time.
             var MatrixID = GL.GetUniformLocation(m_program.ProgramID, "MVP");
 
+     
             // Send our transformation to the currently bound shader,
             // in the "MVP" uniform
             // For each model you render, since the MVP will be different (at least the M part)
@@ -205,11 +204,20 @@ namespace COG.Dredger.States
             m_program.Bind();
             GL.UniformMatrix4(MatrixID, false, ref MVP);
 
-            m_program.Bind();
+            //m_program.Bind();
             m_texture.Bind();
 
             m_mesh.Render();
 
+            //MVP = View * Projection;
+            //GL.UniformMatrix4(MatrixID, false, ref MVP);
+            //MatrixID = GL.GetUniformLocation(m_spriteProgram.ProgramID, "MVP");
+            //m_spriteProgram.Bind();
+            //GL.UniformMatrix4(MatrixID, false, ref MVP);
+
+            //var sprite1 = Quad.Create(m_texture, -1, 1, 1, -1);
+            //m_spriteRenderer.AddQuad(sprite1);
+            //m_spriteRenderer.Render();
 
         }
 

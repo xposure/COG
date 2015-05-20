@@ -44,7 +44,6 @@
     <Compile Include="Panels\Panel.cs" />
     <Compile Include="Panels\StackPanel.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="RectOffset.cs" />
     <Compile Include="Style.cs" />
     <Compile Include="StyleState.cs" />
     <Compile Include="Visual.cs" />
@@ -61,6 +60,10 @@
     <ProjectReference Include="..\..\Core\COG.Logging\COG.Logging.csproj">
       <Project>{923ab1d5-796c-4156-9021-76f4e4f90ced}</Project>
       <Name>COG.Logging</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Core\COG.Math\COG.Math.csproj">
+      <Project>{93ae5494-d768-4967-8cbc-10df52ca1f60}</Project>
+      <Name>COG.Math</Name>
     </ProjectReference>
     <ProjectReference Include="..\COG.Graphics\COG.Graphics.csproj">
       <Project>{d2d0c5c5-0154-4a6c-a04f-72e2e643b237}</Project>

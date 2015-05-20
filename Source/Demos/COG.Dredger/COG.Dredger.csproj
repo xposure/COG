@@ -56,12 +56,22 @@
       <Project>{923ab1d5-796c-4156-9021-76f4e4f90ced}</Project>
       <Name>COG.Logging</Name>
     </ProjectReference>
+    <ProjectReference Include="..\..\Core\COG.Math\COG.Math.csproj">
+      <Project>{93ae5494-d768-4967-8cbc-10df52ca1f60}</Project>
+      <Name>COG.Math</Name>
+    </ProjectReference>
     <ProjectReference Include="..\..\OpenTK\COG.Graphics\COG.Graphics.csproj">
       <Project>{d2d0c5c5-0154-4a6c-a04f-72e2e643b237}</Project>
       <Name>COG.Graphics</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <None Include="Content\Shaders\sprite.frag">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Content\Shaders\sprite.vert">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="Content\Shaders\simple.frag">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

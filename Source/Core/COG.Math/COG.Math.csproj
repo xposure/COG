@@ -17,24 +17,66 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
+    <OutputPath>..\..\..\Build\Libs\Debug\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
+    <OutputPath>..\..\..\Build\Libs\Release\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Axis.cs" />
+    <Compile Include="AxisAlignedBox2.cs" />
+    <Compile Include="AxisAlignedBox3.cs" />
+    <Compile Include="Circle.cs" />
+    <Compile Include="Color.cs" />
+    <Compile Include="Color32.cs" />
+    <Compile Include="Degree.cs" />
+    <Compile Include="Enums.cs" />
+    <Compile Include="LineSegment.cs" />
+    <Compile Include="Matrix3.cs" />
+    <Compile Include="Matrix4.cs" />
+    <Compile Include="MTV.cs" />
+    <Compile Include="Plane.cs" />
+    <Compile Include="PlaneBoundedVolume.cs" />
+    <Compile Include="Point.cs" />
+    <Compile Include="PositionalSpline.cs" />
+    <Compile Include="Projection.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Quaternion.cs" />
+    <Compile Include="Radian.cs" />
+    <Compile Include="Ray.cs" />
+    <Compile Include="Ray3.cs" />
+    <Compile Include="Real.cs" />
+    <Compile Include="Rectangle.cs" />
+    <Compile Include="RectOffset.cs" />
+    <Compile Include="RotationalSpline.cs" />
+    <Compile Include="Shape.cs" />
+    <Compile Include="Sphere.cs" />
+    <Compile Include="Spline.cs" />
+    <Compile Include="Tuple.cs" />
+    <Compile Include="Utility.cs" />
+    <Compile Include="Vector2.cs" />
+    <Compile Include="Vector3.cs" />
+    <Compile Include="Vector3i.cs" />
+    <Compile Include="Vector4.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\COG.Framework\COG.Framework.csproj">
+      <Project>{5a47c043-88a3-4fc3-bb14-d945bc742ae2}</Project>
+      <Name>COG.Framework</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

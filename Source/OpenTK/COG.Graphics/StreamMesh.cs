@@ -4,26 +4,14 @@ using System.Linq;
 using System.Text;
 using COG.Framework;
 using COG.Math;
-using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL4;
 
 namespace COG.Graphics
 {
-    /// <summary>
-    /// This is designed for performance, all checks are up to the user.
-    /// </summary>
-    public class DynamicMesh : DisposableObject
+    public class StreamMesh : DisposableObject
     {
-        #region Const
-
-        //private const int TEMP_INITIAL_INDEX_SIZE = sizeof(UInt16) * TEMP_INITIAL_SIZE;
         private const int TEMP_INITIAL_SIZE = 64;
-        //private const int TEMP_INITIAL_VERTEX_SIZE = TEMP_VERTEXSIZE_GUESS * TEMP_INITIAL_SIZE;
-        //private const int TEMP_VERTEXSIZE_GUESS = sizeof(float) * 12;
 
-        #endregion Const
-
-        //private int m_
         private int m_initalSize;
         private int m_vbufferID, m_ibufferID;
         private int m_vertexPos = 0, m_indexPos = 0;
@@ -32,12 +20,12 @@ namespace COG.Graphics
         private ushort[] m_ibuffer;
         private VertexDeclaration m_decl = new VertexDeclaration();
 
-        public DynamicMesh(VertexDeclaration decl)
+        public StreamMesh(VertexDeclaration decl)
             : this(decl, TEMP_INITIAL_SIZE)
         {
         }
 
-        public DynamicMesh(VertexDeclaration decl, int initialSize)
+        public StreamMesh(VertexDeclaration decl, int initialSize)
         {
             m_decl = decl;
             m_vbuffer = new float[m_decl.Size * initialSize];
@@ -45,13 +33,7 @@ namespace COG.Graphics
             m_initalSize = initialSize;
         }
 
-        public void Begin()
-        {
-            m_vertexPos = 0;
-            m_indexPos = 0;
-        }
-
-        public void End(BufferUsageHint usage)
+        public void Flush()
         {
             if ((m_vertexPos % m_decl.VertexSize) != 0)
                 throw new Exception("End position was not a multiple of declarations vertex size.");
@@ -62,20 +44,25 @@ namespace COG.Graphics
             if (m_ibufferID == 0 && m_indexPos > 0)
                 m_ibufferID = GL.GenBuffer();
 
-            if (m_vbufferID > 0)
+            if (m_vbufferID > 0 && m_vertexPos > 0)
             {
                 GL.BindBuffer(BufferTarget.ArrayBuffer, m_vbufferID);
-                GL.BufferData(BufferTarget.ArrayBuffer, new IntPtr(sizeof(float) * m_vertexPos), m_vbuffer, usage);
+                GL.BufferData(BufferTarget.ArrayBuffer, new IntPtr(sizeof(float) * m_vertexPos), m_vbuffer, BufferUsageHint.StreamDraw);
                 GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
 
             }
 
-            if (m_ibufferID > 0)
+            if (m_ibufferID > 0 && m_indexPos > 0)
             {
                 GL.BindBuffer(BufferTarget.ElementArrayBuffer, m_ibufferID);
-                GL.BufferData(BufferTarget.ElementArrayBuffer, new IntPtr(sizeof(ushort) * m_indexPos), m_ibuffer, usage);
+                GL.BufferData(BufferTarget.ElementArrayBuffer, new IntPtr(sizeof(ushort) * m_indexPos), m_ibuffer, BufferUsageHint.StreamDraw);
                 GL.BindBuffer(BufferTarget.ElementArrayBuffer, 0);
             }
+
+            Render();
+
+            m_vertexPos = 0;
+            m_indexPos = 0;
         }
 
         public void Render()
@@ -284,4 +271,5 @@ namespace COG.Graphics
             Destroy();
         }
     }
+
 }
