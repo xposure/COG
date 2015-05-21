@@ -13,7 +13,7 @@ namespace COG.Dredger.States
         {
             public float life;
             public float decay;
-            public float color;
+            public byte r, g, b, x;
             public float speed;
             public Vector2 size;
             public Vector3 position;
@@ -47,10 +47,15 @@ namespace COG.Dredger.States
                         var particle = m_particles[m_particleIndex];
                         particle.life = 1;
                         particle.speed = rnd.Next(50, 100) / 100f;
-                        particle.color = rnd.Next(500, 1000) / 1000f;
-                        particle.speed = (float)rnd.NextDouble() * 5;
+                        particle.r = (byte)rnd.Next(0, 255);
+                        particle.g = (byte)rnd.Next(0, 255);
+                        particle.b = (byte)rnd.Next(0, 255);
+                        particle.speed = (float)rnd.NextDouble()  * 2;
                         particle.direction = new Vector3(rnd.Next(-1000, 1000), rnd.Next(-1000, 1000), rnd.Next(-1000, 1000));
-                        particle.position = new Vector3(0, 0, 0);
+                        particle.position = new Vector3(
+                            rnd.Next(-100, 100) / 400f,
+                            rnd.Next(-100, 100) / 400f,
+                            rnd.Next(-100, 100) / 400f);
                         //particle.position = new Vector2(rnd.Next(-1000, 1000), rnd.Next(-1000, 1000));
                         particle.size = new Vector2(rnd.Next(500, 1000), rnd.Next(500, 1000));
 
@@ -69,7 +74,7 @@ namespace COG.Dredger.States
             var fdt = (float)dt;
             for (var i = 0; i < m_particleIndex; i++)
             {
-                m_particles[i].life -= fdt ;
+                m_particles[i].life -= fdt  ;
 
                 if (m_particles[i].life <= 0)
                     m_particles[i--] = m_particles[--m_particleIndex];
@@ -99,7 +104,7 @@ namespace COG.Dredger.States
                 var p = m_particles[i];
                 var sprite = Sprite.Create(texture, p.position.X, p.position.Y, p.position.X + p.size.X, p.position.Y - p.size.Y);
                 sprite.SetDepth(p.position.Z);
-                sprite.SetColor(new Color(p.life, 0.5f, 0.5f, 0.5f));
+                sprite.SetColor(new Color(p.life, p.r / 255f, p.g / 255f, p.b / 255f));
 
                 m_renderer.AddQuad(sprite);
             }
@@ -143,7 +148,7 @@ namespace COG.Dredger.States
             m_spriteRenderer = new SpriteRenderer();
             m_particles = new ParticleEmitter();
 
-            m_texture = m_engine.Assets.LoadTexture("dredger:texture:arial_0");
+            m_texture = TextureData2D.CreateMetaball(10, TextureData2D.CircleFalloff, TextureData2D.ColorWhite);
             m_program = m_engine.Assets.LoadProgram("dredger:program:simple");
             m_spriteProgram = m_engine.Assets.LoadProgram("dredger:program:sprite");
             m_font = m_engine.Assets.LoadFont("dredger:font:arial");
@@ -321,7 +326,7 @@ namespace COG.Dredger.States
             // Accept fragment if it closer to the camera than the former one
             GL.DepthFunc(DepthFunction.Less);
 
-            GL.ClearColor(0,0,0,0);
+            GL.ClearColor(0,0,0,1);
             GL.Clear(ClearBufferMask.DepthBufferBit | ClearBufferMask.ColorBufferBit);
 
 

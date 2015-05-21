@@ -95,6 +95,64 @@ namespace COG.Graphics
             return new TextureData2D(data, width, height, PixelInternalFormat.Rgb, PixelFormat.Rgb, PixelType.UnsignedByte);
         }
 
+        public static Texture2D CreateMetaball(int radius, Func<float, int, int, float> falloff, Func<float, int, int, Color> colorPicker)
+        {
+            int length = radius * 2;
+            var colors = new byte[length * length * 4];
+
+            for (int y = 0; y < length; y++)
+            {
+                for (int x = 0; x < length; x++)
+                {
+                    var vector = Vector2.One - (new Vector2(x, y) / radius);
+                    //float distance = Vector2.Distance(Vector2.One,
+                    //    new Vector2(x, y) / radius);
+                    var distance = vector.Length;
+                    var alpha = falloff(distance, x, y);
+
+                    var color = colorPicker(distance, x, y);
+                    color.A = alpha;
+                    //color.A = Utility.Clamp(alpha * 2, 1f, 0f);
+                    //color = Color.FromNonPremultiplied(color.R, color.G, color.B, Utility.Clamp(alpha + 0.5f, 1f, 0f));
+                    var index = (y * length + x) * 4;
+
+                    colors[index] = (byte)(color.R * 255);
+                    colors[index + 1] = (byte)(color.B * 255);
+                    colors[index + 2] = (byte)(color.G * 255);
+                    colors[index + 3] = (byte)(color.A * 255);
+                }
+            }
+
+            var tdata = new TextureData2D(colors, length, length, PixelInternalFormat.Rgba, PixelFormat.Rgba, PixelType.UnsignedByte);
+            return new Texture2D("dredger:texture:test", tdata);
+        }
+
+        public static Color ColorWhite(float distance, int x, int y)
+        {
+            return Color.FromNonPremultiplied(1, 1, 1, 1);
+        }
+
+        public static Color ColorBlack(float distance, int x, int y)
+        {
+            return Color.FromNonPremultiplied(0, 0, 0, 0);
+        }
+
+        public static float CircleFalloff(float distance, int x, int y)
+        {
+            if (0 < distance && distance < 1f / 3f)
+            {
+                return 1 - (3 * (distance * distance));
+            }
+            else if (1f / 3f < distance && distance < 1f)
+            {
+                return (3f / 2f) * ((1f - distance) * (1f - distance));
+            }
+            else if (distance == 0)
+                return 1f;
+
+            return 0f;
+        }
+
     }
     #endregion
 
