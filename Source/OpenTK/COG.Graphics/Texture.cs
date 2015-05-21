@@ -38,6 +38,21 @@ namespace COG.Graphics
         public PixelFormat PixelFormat { get { return m_pixelFormat; } }
         public PixelType PixelType { get { return m_pixelType; } }
 
+        public static TextureData2D FromColorArray(Color[] data, int width, int height)
+        {
+            var ubytes = new byte[data.Length * 4];
+            for (var i = 0; i < data.Length; i++)
+            {
+                var index = i * 4;
+                ubytes[index] = (byte)(data[i].R * 255);
+                ubytes[index + 1] = (byte)(data[i].G * 255);
+                ubytes[index + 2] = (byte)(data[i].B * 255);
+                ubytes[index + 3] = (byte)(data[i].A * 255);
+            }
+
+            return new TextureData2D(ubytes, width, height, PixelInternalFormat.Rgba, PixelFormat.Rgba, PixelType.UnsignedByte);
+        }
+
         public static TextureData2D LoadPng(Stream fs)
         {
             using (var bitmap = new System.Drawing.Bitmap(fs))
