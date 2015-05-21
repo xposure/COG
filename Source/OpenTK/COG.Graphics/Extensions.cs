@@ -7,16 +7,26 @@ public static class GraphicExtensions
     public static void InitializeGraphics(this AssetManager m_assets, string module)
     {
         m_assets.RegisterTypeExtension(Texture2D.TEXTURE, "bmp", TextureData2D.LoadBitmap);
+
+
+        m_assets.SetFactory<TextureData2D, Texture2D>(Texture2D.TEXTURE, Texture2DFactory);
+
+    }
+
+    public static ProgramManager InitializePrograms(this AssetManager m_assets, string module)
+    {
+        var programs = new ProgramManager(m_assets);
+
         m_assets.RegisterTypeExtension(VertexShader.VERTEX, "vert", TextData.LoadData);
         m_assets.RegisterTypeExtension(FragmentShader.FRAGMENT, "frag", TextData.LoadData);
 
         m_assets.AddResolver<ProgramData>(Program.PROGRAM, new Func<AssetUri, ProgramData>(uri => { return m_assets.ResolveProgramData(uri, module); }));
-
-        m_assets.SetFactory<TextureData2D, Texture2D>(Texture2D.TEXTURE, Texture2DFactory);
-        m_assets.SetFactory<ProgramData, Program>(Program.PROGRAM, ProgramFactory);
+        m_assets.SetFactory<ProgramData, Program>(Program.PROGRAM, new Func<AssetUri, ProgramData, Program>((uri, data) => { return ProgramFactory(uri, programs, data); }));
 
         m_assets.SetFactory<TextData, VertexShader>(VertexShader.VERTEX, VertexFactory);
         m_assets.SetFactory<TextData, FragmentShader>(FragmentShader.FRAGMENT, FragmentFactory);
+
+        return programs;
     }
 
     #region Resolvers
@@ -45,11 +55,11 @@ public static class GraphicExtensions
         return new FragmentShader(uri, data);
     }
 
-    private static Program ProgramFactory(AssetUri uri, ProgramData data)
+    private static Program ProgramFactory(AssetUri uri, ProgramManager programs, ProgramData data)
     {
         using (data)
         {
-            return new Program(uri, data);
+            return new Program(uri, programs, data);
         }
     }
     #endregion

@@ -125,27 +125,36 @@ namespace COG.Graphics
     #region Program
     public class Program : DisposableObject, IAsset<ProgramData>
     {
+        #region Variables
         public static readonly AssetType PROGRAM = AssetType.Create("PROGRAM");
 
         private static readonly Logger g_logger = Logger.GetLogger(typeof(Program));
-        private static int g_lastProgramBound;
+
+        internal int i_lastAutoUniform;
 
         private int m_programID;
         private AssetUri m_uri;
         private List<VertexAttribute> m_attributes = new List<VertexAttribute>();
         private List<VertexUniform> m_uniforms = new List<VertexUniform>();
+        private ProgramManager m_programs;
+        #endregion
 
-        public Program(AssetUri uri, ProgramData data)
+        #region Ctor
+        public Program(AssetUri uri, ProgramManager programs, ProgramData data)
         {
             m_uri = uri;
+            m_programs = programs;
+            m_programs.AddProgram(this);
+
             Reload(data);
         }
+        #endregion
 
         #region Properties
         public int ProgramID { get { return m_programID; } }
-        
+
         public AssetUri Uri { get { return m_uri; } }
-        
+
         public bool IsValid { get { return m_programID != 0; } }
 
         public IEnumerable<VertexAttribute> Attributes
@@ -167,17 +176,13 @@ namespace COG.Graphics
         }
         #endregion Properties
 
+        #region Methods
         public void Bind()
         {
             if (!IsValid)
                 return;
 
-            if (g_lastProgramBound != m_programID)
-            {
-                GL.UseProgram(m_programID);
-                g_lastProgramBound = m_programID;
-            }
-
+            m_programs.SetCurrentProgram(this);
         }
 
         private bool InitializeUniforms()
@@ -287,24 +292,6 @@ namespace COG.Graphics
             }
         }
 
-        protected override void DisposedUnmanaged()
-        {
-            base.DisposedUnmanaged();
-
-            Destroy();
-        }
-
-        private void Destroy()
-        {
-            if (m_programID != 0)
-                GL.DeleteProgram(m_programID);
-
-            m_attributes.Clear();
-            m_uniforms.Clear();
-            m_programID = 0;
-        }
-
-
         public VertexAttribute FindAttributeBySemantic(VertexElementSemantic semantic)
         {
             foreach (var attr in m_attributes)
@@ -345,7 +332,168 @@ namespace COG.Graphics
             GL.UniformMatrix4(uniform.Location, false, ref matrix);
             return true;
         }
+        #endregion Methods
+
+        #region Disposing
+        protected override void DisposeManaged()
+        {
+            base.DisposeManaged();
+
+            m_programs.RemoveProgram(this);
+        }
+
+        protected override void DisposedUnmanaged()
+        {
+            base.DisposedUnmanaged();
+
+            Destroy();
+        }
+
+        private void Destroy()
+        {
+            if (m_programID != 0)
+                GL.DeleteProgram(m_programID);
+
+            m_attributes.Clear();
+            m_uniforms.Clear();
+            m_programID = 0;
+        }
+        #endregion Disposing
     }
     #endregion Program
+
+    public class ProgramManager : DisposableObject
+    {
+        internal int i_lastUpdate;
+        private AssetManager m_assets;
+        private Program m_currentProgram;
+        private List<Program> m_programs = new List<Program>();
+        private Dictionary<string, AutoVertexUniform> m_uniforms = new Dictionary<string, AutoVertexUniform>();
+
+        public Program CurrentProgram { get { return m_currentProgram; } }
+
+        public ProgramManager(AssetManager assets)
+        {
+            m_assets = assets;
+        }
+
+        internal void AddProgram(Program program)
+        {
+            m_programs.Add(program);
+        }
+
+        internal void RemoveProgram(Program program)
+        {
+            for (int i = m_programs.Count - 1; i >= 0; i--)
+            {
+                if (m_programs[i].ProgramID == program.ProgramID)
+                {
+                    m_programs.RemoveAt(i);
+                    return;
+                }
+            }
+        }
+
+        internal void SetCurrentProgram(Program program)
+        {
+            if (program == null)
+                GL.UseProgram(0);
+
+            if (program)
+            {
+                if (m_currentProgram == null || m_currentProgram.ProgramID != program.ProgramID)
+                {
+                    m_currentProgram = program;
+                    GL.UseProgram(program.ProgramID);
+                }
+
+                if (i_lastUpdate != program.i_lastAutoUniform)
+                {
+                    //auto sync params
+                    foreach (var uni in program.Uniforms)
+                    {
+                        AutoVertexUniform autoUni;
+                        if (m_uniforms.TryGetValue(uni.Name, out autoUni))
+                            autoUni.Update(uni);
+                    }
+
+                    program.i_lastAutoUniform = i_lastUpdate;
+                }
+            }
+            else
+                m_currentProgram = null;
+
+        }
+
+        public AutoVertexUniformMatrix4 CreateAutoUniformMatrix4(string name)
+        {
+            var uniform = new AutoVertexUniformMatrix4(this, name);
+            m_uniforms.Add(name, uniform);
+
+            i_lastUpdate++;
+
+            return uniform;
+        }
+
+        protected override void DisposeManaged()
+        {
+            base.DisposeManaged();
+
+            for (int i = m_programs.Count - 1; i >= 0; i--)
+                m_programs[i].Dispose();
+        }
+
+    }
+
+    public abstract class AutoVertexUniform
+    {
+        protected ProgramManager m_programs;
+        protected string m_name;
+
+        protected AutoVertexUniform(ProgramManager programs, string name)
+        {
+            m_programs = programs;
+            m_name = name;
+        }
+
+        public abstract void Update(VertexUniform uniform);
+    }
+
+    public abstract class AutoVertexUniform<T> : AutoVertexUniform
+        where T : IEquatable<T>
+    {
+        protected T m_value;
+
+        protected AutoVertexUniform(ProgramManager programs, string name)
+            : base(programs, name)
+        {
+
+        }
+
+        public void SetValue(T t)
+        {
+            if (!t.Equals(m_value))
+            {
+                m_programs.i_lastUpdate++;
+                m_value = t;
+            }
+        }
+    }
+
+    public class AutoVertexUniformMatrix4 : AutoVertexUniform<Matrix4>
+    {
+        private bool m_transpose = false;
+
+        internal AutoVertexUniformMatrix4(ProgramManager programs, string name)
+            : base(programs, name)
+        {
+
+        }
+
+        public override void Update(VertexUniform uniform)
+        {
+            GL.UniformMatrix4(uniform.Location, m_transpose, ref  m_value);
+        }
+    }
 
 }

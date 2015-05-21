@@ -94,8 +94,6 @@ namespace COG.Dredger.States
             GL.Enable(EnableCap.Blend);
             GL.BlendFunc(BlendingFactorSrc.SrcAlpha, BlendingFactorDest.OneMinusSrcAlpha);
 
-            //GL.BlendFunc(BlendingFactorSrc.SrcAlpha, BlendingFactorDest.OneMinusSrcAlpha);
-            //GL.Disable(EnableCap.DepthTest);
             for (var i = 0; i < m_particleIndex; i++)
             {
                 var p = m_particles[i];
@@ -129,6 +127,14 @@ namespace COG.Dredger.States
         private DynamicMesh m_mesh;
         private StreamMesh m_mesh2;
         private ParticleEmitter m_particles;
+        private AutoVertexUniformMatrix4 m_mvp;
+
+        public override void Initialize(Engine engine)
+        {
+            base.Initialize(engine);
+
+            m_mvp = engine.Programs.CreateAutoUniformMatrix4("MVP");
+        }
 
         public override void LoadResources()
         {
@@ -155,7 +161,6 @@ namespace COG.Dredger.States
 
             GL.ClearColor(1f, 1f, 1f, 1f);
         }
-
 
         private void GenerateCube()
         {
@@ -280,6 +285,19 @@ namespace COG.Dredger.States
             if (rotation > System.Math.PI * 2)
                 rotation -= System.Math.PI * 2;
 
+            // Projection matrix : 45° Field of View, 4:3 ratio, display range : 0.1 unit <-> 100 units
+            var Projection = Matrix4.CreatePerspectiveFieldOfView(0.785398163f, 4.0f / 3.0f, 0.1f, 100.0f);
+            // Camera matrix
+            var View = Matrix4.LookAt(
+                    new Vector3(4, 3, 3), // Camera is at (4,3,3), in world space
+                    new Vector3(0, 0, 0), // and looks at the origin
+                    new Vector3(0, 1, 0) // head is up (set to 0,-1,0 to look upside-down
+                );
+            var Model = Matrix4.CreateRotationY((float)rotation);
+            //var Model = Matrix4.Identity;
+
+            m_mvp.SetValue(Model * View * Projection);
+
             m_particles.Update(dt);
 
             ProcessKeyboard();
@@ -300,58 +318,10 @@ namespace COG.Dredger.States
             //GL.ClearColor(0,0,0,0);
             GL.Clear(ClearBufferMask.DepthBufferBit | ClearBufferMask.ColorBufferBit);
 
-            // Projection matrix : 45° Field of View, 4:3 ratio, display range : 0.1 unit <-> 100 units
-            var Projection = Matrix4.CreatePerspectiveFieldOfView(0.785398163f, 4.0f / 3.0f, 0.1f, 100.0f);
-            // Camera matrix
-            var View = Matrix4.LookAt(
-                    new Vector3(4, 3, 3), // Camera is at (4,3,3), in world space
-                    new Vector3(0, 0, 0), // and looks at the origin
-                    new Vector3(0, 1, 0) // head is up (set to 0,-1,0 to look upside-down
-                );
-            // Model matrix : an identity matrix (model will be at the origin)
-            var Model = Matrix4.CreateRotationY((float)rotation);
-            //var Model = Matrix4.Identity;
-            // Our ModelViewProjection : multiplication of our 3 matrices
 
-            var MVP = Projection * View * Model;
-            MVP = Model * View * Projection;
-
-
-
-            //Console.WriteLine(Projection);
-            //Console.WriteLine(Projection2);
-            //Console.WriteLine();
-            //Console.WriteLine(View * Model);
-            //Console.WriteLine(View2 * Model2);
-            //Console.WriteLine();
-            //Console.WriteLine(MVP);
-            //Console.WriteLine(MVP2);
-            //MVP2 = MVP2.Transpose();
-            // Get a handle for our "MVP" uniform.
-            // Only at initialisation time.
-            //var MatrixID = GL.GetUniformLocation(m_program.ProgramID, "MVP");
-
-
-            // Send our transformation to the currently bound shader,
-            // in the "MVP" uniform
-            // For each model you render, since the MVP will be different (at least the M part)
-            //GL.UseProgram(programID);
-            m_program.Bind();
-            m_program.SetUniformMatrix4("MVP", MVP);
-            //GL.UniformMatrix4(MatrixID, false, ref MVP);
-            //GL.Uniform1()
-
-            //m_program.Bind();
             m_texture.Bind();
-
-            //m_mesh.Render();
-
-            //MVP = View * Projection;
-            //GL.UniformMatrix4(MatrixID, false, ref MVP);
-            //MatrixID = GL.GetUniformLocation(m_spriteProgram.ProgramID, "MVP");
-            m_spriteProgram.Bind();
-            m_spriteProgram.SetUniformMatrix4("MVP", MVP);
-
+            m_mesh.Render(m_program);
+          
             var sprite1 = Sprite.Create(m_texture, -1, 1, 1, -1);
             sprite1.SetColor(Color.White);
 
@@ -359,7 +329,6 @@ namespace COG.Dredger.States
             //m_spriteRenderer.Render();
 
             m_particles.Render(m_spriteProgram, m_texture, dt);
-
         }
 
         private void ProcessKeyboard()

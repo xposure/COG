@@ -35,12 +35,14 @@ namespace COG.Dredger
         private Config m_config;
         private GameWindow m_gameWindow;
         private AssetManager m_assets;
+        private ProgramManager m_programs;
         private Stack<GameState> m_states;
         private List<Action> m_pendingStateChanges;
 
         private bool m_isRunning = false;
 
         public bool IsRunning { get { return m_isRunning; } }
+        public ProgramManager Programs { get { return m_programs; } }
         public AssetManager Assets { get { return m_assets; } }
         public RegistryManager Registry { get { return m_registry; } }
         public GameWindow GameWindow { get { return m_gameWindow; } }
@@ -97,7 +99,7 @@ namespace COG.Dredger
 
             m_isRunning = false;
 
-            Shutdown();
+            Cleanup();
         }
 
         public void Stop(string message)
@@ -219,6 +221,8 @@ namespace COG.Dredger
         {
             m_assets = new AssetManager();
             m_assets.InitializeGraphics(m_config.Module.Name);
+
+            m_programs = m_assets.InitializePrograms(m_config.Module.Name);
           
             m_assets.AddAssetSource(new DirectorySource(m_config.Module.Name, "content"));
         }
@@ -247,9 +251,12 @@ namespace COG.Dredger
             OpenTK.Toolkit.Init();
         }
 
-        private void Shutdown()
+        private void Cleanup()
         {
             PurgeStates();
+
+            m_programs.Dispose();
+            m_assets.Dispose();
 
             m_gameWindow.Dispose();
             m_gameWindow = null;
