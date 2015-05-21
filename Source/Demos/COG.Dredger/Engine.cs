@@ -221,9 +221,11 @@ namespace COG.Dredger
         {
             m_assets = new AssetManager();
             m_assets.InitializeGraphics(m_config.Module.Name);
+            m_assets.InitializeFonts();
 
             m_programs = m_assets.InitializePrograms(m_config.Module.Name);
-          
+
+
             m_assets.AddAssetSource(new DirectorySource(m_config.Module.Name, "content"));
         }
 

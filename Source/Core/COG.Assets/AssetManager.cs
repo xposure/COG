@@ -45,7 +45,9 @@ namespace COG.Assets
                 );
 
                 m_assetLoaders.Add(extension, assetLoader);
-                m_nameLookup.Add(type.name.ToLower(), type);
+
+                if(!m_nameLookup.ContainsKey(type.name.ToLower()))
+                    m_nameLookup.Add(type.name.ToLower(), type);
             }
         }
 

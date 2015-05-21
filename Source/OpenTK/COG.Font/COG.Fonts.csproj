@@ -4,30 +4,28 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{5284957E-C430-42C1-91CF-021F9E973B0D}</ProjectGuid>
-    <OutputType>Exe</OutputType>
+    <ProjectGuid>{C0274494-7C98-4306-9859-97952EB3F632}</ProjectGuid>
+    <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>COG.Dredger</RootNamespace>
-    <AssemblyName>COG.Dredger</AssemblyName>
+    <RootNamespace>COG.Fonts</RootNamespace>
+    <AssemblyName>COG.OpenTK.Font</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>..\..\..\Build\Demos\Debug\Dredger\</OutputPath>
+    <OutputPath>..\..\..\Build\Libs\Debug\OpenTK\Font\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>..\..\..\Build\Demos\Release\Dredger\</OutputPath>
+    <OutputPath>..\..\..\Build\Libs\Release\OpenTK\Font\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -35,13 +33,19 @@
   <ItemGroup>
     <Reference Include="OpenTK, Version=1.1.0.0, Culture=neutral, PublicKeyToken=bad199fe84eb3df4, processorArchitecture=MSIL" />
     <Reference Include="System" />
+    <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Config.cs" />
-    <Compile Include="Engine.cs" />
-    <Compile Include="App.cs" />
+    <Compile Include="Font.cs" />
+    <Compile Include="FontCharacter.cs" />
+    <Compile Include="FontCommon.cs" />
+    <Compile Include="FontData.cs" />
+    <Compile Include="FontExtensions.cs" />
+    <Compile Include="FontInfo.cs" />
+    <Compile Include="FontKerning.cs" />
+    <Compile Include="FontPage.cs" />
+    <Compile Include="IFont.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="States\MainMenu.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\Core\COG.Assets\COG.Assets.csproj">
@@ -60,40 +64,10 @@
       <Project>{93ae5494-d768-4967-8cbc-10df52ca1f60}</Project>
       <Name>COG.Math</Name>
     </ProjectReference>
-    <ProjectReference Include="..\..\OpenTK\COG.Font\COG.Fonts.csproj">
-      <Project>{c0274494-7c98-4306-9859-97952eb3f632}</Project>
-      <Name>COG.Fonts</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\..\OpenTK\COG.Graphics\COG.Graphics.csproj">
+    <ProjectReference Include="..\COG.Graphics\COG.Graphics.csproj">
       <Project>{d2d0c5c5-0154-4a6c-a04f-72e2e643b237}</Project>
       <Name>COG.Graphics</Name>
     </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Content\Fonts\arial.fnt">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="Content\Shaders\sprite.frag">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="Content\Shaders\sprite.vert">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="Content\Shaders\simple.frag">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="Content\Shaders\simple.vert">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="Content\Textures\uvtemplate.bmp">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
-  <ItemGroup />
-  <ItemGroup>
-    <None Include="Content\Fonts\arial_0.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

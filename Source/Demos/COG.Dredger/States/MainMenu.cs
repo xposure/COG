@@ -128,6 +128,7 @@ namespace COG.Dredger.States
         private StreamMesh m_mesh2;
         private ParticleEmitter m_particles;
         private AutoVertexUniformMatrix4 m_mvp;
+        private Atma.Font m_font;
 
         public override void Initialize(Engine engine)
         {
@@ -142,9 +143,10 @@ namespace COG.Dredger.States
             m_spriteRenderer = new SpriteRenderer();
             m_particles = new ParticleEmitter();
 
-            m_texture = m_engine.Assets.LoadTexture("dredger:texture:uvtemplate");
+            m_texture = m_engine.Assets.LoadTexture("dredger:texture:arial_0");
             m_program = m_engine.Assets.LoadProgram("dredger:program:simple");
             m_spriteProgram = m_engine.Assets.LoadProgram("dredger:program:sprite");
+            m_font = m_engine.Assets.LoadFont("dredger:font:arial");
 
             vertexArrayID = GL.GenVertexArray();
             GL.BindVertexArray(vertexArrayID);
@@ -156,6 +158,7 @@ namespace COG.Dredger.States
 
             m_mesh = new DynamicMesh(decl);
             m_mesh2 = new StreamMesh(decl);
+
 
             GenerateCube();
 
@@ -269,6 +272,9 @@ namespace COG.Dredger.States
         {
             base.UnloadResources();
 
+            if(m_font)
+                m_font.Dispose();
+
             m_particles.Dispose();
             m_spriteRenderer.Dispose();
             m_mesh.Dispose();
@@ -289,16 +295,16 @@ namespace COG.Dredger.States
             var Projection = Matrix4.CreatePerspectiveFieldOfView(0.785398163f, 4.0f / 3.0f, 0.1f, 100.0f);
             // Camera matrix
             var View = Matrix4.LookAt(
-                    new Vector3(4, 3, 3), // Camera is at (4,3,3), in world space
+                    new Vector3(0,0,3), // Camera is at (4,3,3), in world space
                     new Vector3(0, 0, 0), // and looks at the origin
                     new Vector3(0, 1, 0) // head is up (set to 0,-1,0 to look upside-down
                 );
-            var Model = Matrix4.CreateRotationY((float)rotation);
-            //var Model = Matrix4.Identity;
+            //var Model = Matrix4.CreateRotationY((float)rotation);
+            var Model = Matrix4.Identity;
 
             m_mvp.SetValue(Model * View * Projection);
 
-            m_particles.Update(dt);
+            //m_particles.Update(dt);
 
             ProcessKeyboard();
             ProcessMouse();
@@ -309,26 +315,29 @@ namespace COG.Dredger.States
         {
             //GenerateCube();
             // Enable depth test
-            GL.Disable(EnableCap.Blend);
+            //GL.Disable(EnableCap.Blend);
             GL.DepthMask(true);
             GL.Enable(EnableCap.DepthTest);
             // Accept fragment if it closer to the camera than the former one
             GL.DepthFunc(DepthFunction.Less);
 
-            //GL.ClearColor(0,0,0,0);
+            GL.ClearColor(0,0,0,0);
             GL.Clear(ClearBufferMask.DepthBufferBit | ClearBufferMask.ColorBufferBit);
 
 
             m_texture.Bind();
-            m_mesh.Render(m_program);
-          
+            //m_mesh.Render(m_program);
+
+            GL.DepthMask(false);
+            GL.Enable(EnableCap.Blend);
+            GL.BlendFunc(BlendingFactorSrc.SrcAlpha, BlendingFactorDest.OneMinusSrcAlpha);
             var sprite1 = Sprite.Create(m_texture, -1, 1, 1, -1);
             sprite1.SetColor(Color.White);
 
-            //m_spriteRenderer.AddQuad(sprite1);
-            //m_spriteRenderer.Render();
+            m_spriteRenderer.AddQuad(sprite1);
+            m_spriteRenderer.Render(m_spriteProgram);
 
-            m_particles.Render(m_spriteProgram, m_texture, dt);
+            //m_particles.Render(m_spriteProgram, m_texture, dt);
         }
 
         private void ProcessKeyboard()

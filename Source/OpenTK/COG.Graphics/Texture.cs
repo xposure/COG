@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using COG.Assets;
 using COG.Framework;
+using OpenTK;
 using OpenTK.Graphics.OpenGL4;
 
 namespace COG.Graphics
@@ -15,17 +16,61 @@ namespace COG.Graphics
     {
         private byte[] m_data;
         private int m_width, m_height;
+        private PixelInternalFormat m_pixelInternalFormat;
+        private PixelFormat m_pixelFormat;
+        private PixelType m_pixelType;
 
-        public TextureData2D(byte[] data, int width, int height)
+
+        public TextureData2D(byte[] data, int width, int height, PixelInternalFormat pixelInternalFormat, PixelFormat pixelFormat, PixelType pixelType)
         {
             m_data = data;
             m_width = width;
             m_height = height;
+            m_pixelInternalFormat = pixelInternalFormat;
+            m_pixelFormat = pixelFormat;
+            m_pixelType = pixelType;
         }
 
         public byte[] PixelData { get { return m_data; } }
         public int Width { get { return m_width; } }
         public int Height { get { return m_height; } }
+        public PixelInternalFormat PixelInternalFormat { get { return m_pixelInternalFormat; } }
+        public PixelFormat PixelFormat { get { return m_pixelFormat; } }
+        public PixelType PixelType { get { return m_pixelType; } }
+
+        public static TextureData2D LoadPng(Stream fs)
+        {
+            using (var bitmap = new System.Drawing.Bitmap(fs))
+            {
+                var bd = bitmap.LockBits(new System.Drawing.Rectangle(0, 0, bitmap.Width, bitmap.Height),
+                              System.Drawing.Imaging.ImageLockMode.ReadOnly, bitmap.PixelFormat);
+
+                var stride = Math.Abs(bd.Stride);
+                var bgraData = new byte[bitmap.Height * stride];
+
+                System.Runtime.InteropServices.Marshal.Copy(bd.Scan0, bgraData, 0, bitmap.Height * stride);
+
+                bitmap.UnlockBits(bd);
+
+                //var ugh = 0;
+                //for (var i = 0; i < bgraData.Length; i++)
+                //{
+                //    if (++ugh == 4)
+                //    {
+                //        ugh = 0;
+                //        continue;
+                //    }
+                //    bgraData[i] = 0;
+                //}
+
+                //for (var i = 3; i < bgraData.Length; i+=4)
+                //{
+                //    bgraData[i] = 0;
+                //}
+
+                return new TextureData2D(bgraData, bitmap.Width, bitmap.Height, PixelInternalFormat.Rgba, PixelFormat.Rgba, PixelType.UnsignedByte);
+            }
+        }
 
         public static TextureData2D LoadBitmap(Stream fs)
         {
@@ -63,7 +108,7 @@ namespace COG.Graphics
             var data = new byte[imageSize];
             fs.Read(data, 0, imageSize);
 
-            return new TextureData2D(data, width, height);
+            return new TextureData2D(data, width, height, PixelInternalFormat.Rgb, PixelFormat.Rgb, PixelType.UnsignedByte);
         }
 
     }
@@ -164,7 +209,6 @@ namespace COG.Graphics
             Reload(data);
         }
 
-
         public AssetUri Uri { get { return m_uri; } }
 
         public TextureMagFilter MagFilter
@@ -203,13 +247,18 @@ namespace COG.Graphics
 
             GLSetupTexture();
 
-            GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgb, m_width, m_height, 0, PixelFormat.Rgb, PixelType.UnsignedByte, data.PixelData);
+            GL.TexImage2D(TextureTarget.Texture2D, 0, data.PixelInternalFormat, m_width, m_height, 0, data.PixelFormat, data.PixelType, data.PixelData);
 
             MagFilter = m_magFilter;
             MinFilter = m_minFilter;
 
-            ProcessTextureParams(); 
+            ProcessTextureParams();
 
+        }
+
+        public Vector2 GetUV(int x, int y)
+        {
+            return new Vector2(x / (float)m_width, y / (float)m_height);
         }
 
     }

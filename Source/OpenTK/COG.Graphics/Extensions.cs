@@ -7,10 +7,8 @@ public static class GraphicExtensions
     public static void InitializeGraphics(this AssetManager m_assets, string module)
     {
         m_assets.RegisterTypeExtension(Texture2D.TEXTURE, "bmp", TextureData2D.LoadBitmap);
-
-
+        m_assets.RegisterTypeExtension(Texture2D.TEXTURE, "png", TextureData2D.LoadPng);
         m_assets.SetFactory<TextureData2D, Texture2D>(Texture2D.TEXTURE, Texture2DFactory);
-
     }
 
     public static ProgramManager InitializePrograms(this AssetManager m_assets, string module)
