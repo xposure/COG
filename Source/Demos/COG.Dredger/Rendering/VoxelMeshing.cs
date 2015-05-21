@@ -119,7 +119,7 @@ namespace COG.Dredger.Rendering
         public void RenderOpaque(Program program)
         {
             var p = new Vector3(X, 0, Z);
-            var m = Matrix4.CreateTranslation(p);
+            var m = Matrix4.CreateTranslation(p / 8f);
 
             program.SetUniformMatrix4("model", m);
             opaqueMesh.Render(program);
@@ -128,7 +128,7 @@ namespace COG.Dredger.Rendering
         public void RenderAlpha(Program program)
         {
             var p = new Vector3(X, 0, Z);
-            var m = Matrix4.CreateTranslation(p);
+            var m = Matrix4.CreateTranslation(p / 8f);
             
             program.SetUniformMatrix4("model", m);
             waterMesh.Render(program);
@@ -1435,8 +1435,8 @@ namespace COG.Dredger.Rendering
 
     //        foreach (var rp in GridRayTracer.Trace(start, end))
     //        {
-    //            var wx = (int)rp.x;
-    //            var wy = (int)rp.y;
+    //            var wx = (int)rp.X;
+    //            var wy = (int)rp.Y;
     //            var wz = (int)rp.z;
 
     //            if (GetBlock(wx, wy, wz) > 0)
@@ -1519,8 +1519,8 @@ namespace COG.Dredger.Rendering
     //        //HACK: hover is using water's shader
     //        foreach (var rp in GridRayTracer.Trace(start, end))
     //        {
-    //            var wx = (int)rp.x;
-    //            var wy = (int)rp.y;
+    //            var wx = (int)rp.X;
+    //            var wy = (int)rp.Y;
     //            var wz = (int)rp.z;
     //            //Graphics.DrawMeshNow(hover.mesh, m);
 

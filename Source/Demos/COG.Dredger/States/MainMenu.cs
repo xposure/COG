@@ -127,10 +127,12 @@ namespace COG.Dredger.States
         private DynamicMesh m_mesh;
         private StreamMesh m_mesh2;
         private ParticleEmitter m_particles;
-        private AutoVertexUniformMatrix4 m_viewProjection;
+        private AutoVertexUniformMatrix4 m_view, m_projection, m_viewProjection;
         private Volume m_volume;
         private VolumeGenerator m_vgen;
         private ChunkManager m_chunks;
+        private Camera m_camera;
+        private bool use_camera = false;
 
         private Atma.Font m_font;
 
@@ -138,10 +140,14 @@ namespace COG.Dredger.States
         {
             base.Initialize(engine);
 
+            m_view = engine.Programs.CreateAutoUniformMatrix4("view");
+            m_projection = engine.Programs.CreateAutoUniformMatrix4("projection");
             m_viewProjection = engine.Programs.CreateAutoUniformMatrix4("viewProjection");
+
             m_vgen = new VolumeGenerator();
             m_vgen.enableAO = true;
             m_vgen.enableGreedy = true;
+            m_camera = new Camera();
         }
 
         public override void LoadResources()
@@ -156,7 +162,7 @@ namespace COG.Dredger.States
             m_opaqueChunkProgram = m_engine.Assets.LoadProgram("dredger:program:opaqueChunk");
             m_spriteProgram = m_engine.Assets.LoadProgram("dredger:program:sprite");
             m_font = m_engine.Assets.LoadFont("dredger:font:arial");
-            
+
             m_chunks = new ChunkManager();
             m_chunks.Initialize();
 
@@ -300,29 +306,32 @@ namespace COG.Dredger.States
             m_mesh2.Dispose();
         }
 
+        float x = 0;
         public override void Update(double dt)
         {
             rotation += dt;
 
+
             if (rotation > System.Math.PI * 2)
                 rotation -= System.Math.PI * 2;
 
-            // Projection matrix : 45° Field of View, 4:3 ratio, display range : 0.1 unit <-> 100 units
-            var Projection = Matrix4.CreatePerspectiveFieldOfView(0.785398163f, 4.0f / 3.0f, 0.1f, 100.0f);
-            // Camera matrix
-            var View = Matrix4.LookAt(
-                    new Vector3(0, 0, 3), // Camera is at (4,3,3), in world space
-                    new Vector3(0, 0, 0), // and looks at the origin
-                    new Vector3(0, 1, 0) // head is up (set to 0,-1,0 to look upside-down
-                );
-            //var Model = Matrix4.CreateRotationY((float)rotation);
-            //var Model = Matrix4.Identity;
+            m_camera.FieldOfView = 0.785398163f;
+            m_camera.AspectRatio = 4.0f / 3.0f;
+            m_camera.Near = 0.1f;
+            m_camera.Far = 100f;
+            m_camera.Position = new Vector3(x, 10, 3);
+            m_camera.LookAt(new Vector3(16f, 0f, 16f));
 
-            m_viewProjection.SetValue(View * Projection);
+
+            m_view.SetValue(m_camera.ViewMatrix);
+            m_projection.SetValue(m_camera.ProjectionMatrix);
+            m_viewProjection.SetValue(m_camera.ViewMatrix * m_camera.ProjectionMatrix);
 
             //m_particles.Update(dt);
 
-            ProcessKeyboard();
+            if (ProcessKeyboard((float)dt))
+            {
+                      }
             ProcessMouse();
         }
 
@@ -344,31 +353,53 @@ namespace COG.Dredger.States
 
 
             //m_mesh.Render(m_program);
-            m_volume.RenderOpaque(m_opaqueChunkProgram);
-            m_volume.RenderAlpha(m_opaqueChunkProgram);
+            //m_volume.RenderOpaque(m_opaqueChunkProgram);
+            //m_volume.RenderAlpha(m_opaqueChunkProgram);
+            m_chunks.RenderOpaque(m_opaqueChunkProgram);
+            m_chunks.renderAlpha(m_opaqueChunkProgram);
 
             GL.DepthMask(false);
             GL.Enable(EnableCap.Blend);
             GL.BlendFunc(BlendingFactorSrc.SrcAlpha, BlendingFactorDest.OneMinusSrcAlpha);
-            var sprite1 = Sprite.Create(m_texture, -1, 1, 1, -1);
-            sprite1.SetColor(Color.White);
+            //var sprite1 = Sprite.Create(m_texture, -1, 1, 1, -1);
+            //sprite1.SetColor(Color.White);
 
             //m_spriteRenderer.AddQuad(sprite1);
             m_texture.Bind();
-            m_spriteRenderer.DrawText(m_font, Vector2.Zero, "DDD");
-            m_spriteRenderer.Render(m_spriteProgram);
+            //m_spriteRenderer.DrawText(m_font, Vector2.Zero, "DDD");
+            //m_spriteRenderer.Render(m_spriteProgram);
 
-            m_chunks.RenderOpaque(m_opaqueChunkProgram);
-            m_chunks.renderAlpha(m_opaqueChunkProgram);
+  
 
             //m_particles.Render(m_spriteProgram, m_texture, dt);
         }
 
-        private void ProcessKeyboard()
+        private bool c_down = false;
+        private bool ProcessKeyboard(float delta)
         {
             var keyboard = OpenTK.Input.Keyboard.GetState();
             if (keyboard[OpenTK.Input.Key.Escape])
                 m_engine.Stop("User pressed escape from main menu");
+
+            if (keyboard[OpenTK.Input.Key.A])
+                x -= (float)delta;
+
+            if (keyboard[OpenTK.Input.Key.D])
+                x += (float)delta;
+
+            if (keyboard[OpenTK.Input.Key.C] )
+            {
+                if (!c_down)
+                {
+                    use_camera = !use_camera;
+                    c_down = true;
+                    return true;
+                }
+            }
+            else 
+                c_down = false;
+
+            return false;
         }
 
         private void ProcessMouse()

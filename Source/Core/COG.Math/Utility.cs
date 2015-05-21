@@ -1526,10 +1526,10 @@ namespace OpenTK
         //    Vector2 minB = boxB.Minimum;
         //    Vector2 maxB = boxB.Maximum;
 
-        //    if ((minB.x < minA.x) &&
-        //        (maxB.x > maxA.x) &&
-        //        (minB.y < minA.y) &&
-        //        (maxB.y > maxA.y) &&
+        //    if ((minB.X < minA.X) &&
+        //        (maxB.X > maxA.X) &&
+        //        (minB.Y < minA.Y) &&
+        //        (maxB.Y > maxA.Y) &&
         //        (minB.z < minA.z) &&
         //        (maxB.z > maxA.z))
         //    {
@@ -1537,10 +1537,10 @@ namespace OpenTK
         //        return Intersection.Contained;
         //    }
 
-        //    if ((minB.x > minA.x) &&
-        //        (maxB.x < maxA.x) &&
-        //        (minB.y > minA.y) &&
-        //        (maxB.y < maxA.y) &&
+        //    if ((minB.X > minA.X) &&
+        //        (maxB.X < maxA.X) &&
+        //        (minB.Y > minA.Y) &&
+        //        (maxB.Y < maxA.Y) &&
         //        (minB.z > minA.z) &&
         //        (maxB.z < maxA.z))
         //    {
@@ -1548,11 +1548,11 @@ namespace OpenTK
         //        return Intersection.Contains;
         //    }
 
-        //    if ((minB.x > maxA.x) ||
-        //        (minB.y > maxA.y) ||
+        //    if ((minB.X > maxA.X) ||
+        //        (minB.Y > maxA.Y) ||
         //        (minB.z > maxA.z) ||
-        //        (maxB.x < minA.x) ||
-        //        (maxB.y < minA.y) ||
+        //        (maxB.X < minA.X) ||
+        //        (maxB.Y < minA.Y) ||
         //        (maxB.z < minA.z))
         //    {
         //        // not interesting at all
@@ -1842,7 +1842,7 @@ namespace OpenTK
             if (size.X <= targetSize.X && size.Y <= targetSize.Y)
                 return size;
 
-            var ratio = Vector2.Divide(targetSize , size);
+            var ratio = Vector2.Divide(targetSize, size);
             if (ratio.X > ratio.Y)
                 size *= ratio.Y;
             else
@@ -2159,6 +2159,64 @@ namespace OpenTK
             return Vector2.Dot(left, right);
         }
 
+        public static bool IsAffine(this Matrix4 matrix)
+        {
+            return matrix.M41 == 0 && matrix.M42 == 0 && matrix.M43 == 0 && matrix.M44 == 1;
+        }
+
+        public static Vector3 TransformAffine(this Matrix4 matrix, Vector3 v)
+        {
+            Debug.Assert(matrix.IsAffine());
+
+            return new Vector3(
+                matrix.M11 * v.X + matrix.M12 * v.Y + matrix.M13 * v.Z,
+                matrix.M21 * v.X + matrix.M22 * v.Y + matrix.M23 * v.Z,
+                matrix.M31 * v.X + matrix.M32 * v.Y + matrix.M33 * v.Z
+                );
+        }
+
+        public static Matrix3 Transposed(this Matrix3 matrix)
+        {
+            var r = matrix;
+            r.Transpose();
+            return r;
+        }
+
+        public static Matrix4 Transposed(this Matrix4 matrix)
+        {
+            var r = matrix;
+            r.Transpose();
+            return r;
+        }
+
+        public static Matrix4 Merge(Matrix4 left, Matrix3 right)
+        {
+            return new Matrix4(
+                new Vector4(right.Row0, left[0, 3]), 
+                new Vector4(right.Row1, left[1, 3]), 
+                new Vector4(right.Row2, left[2, 3]), 
+                left.Row3);
+        }
+
+        public static Matrix3 Negated(this Matrix3 value)
+        {
+            return new Matrix3(-value.Row0, -value.Row1, -value.Row2);
+        }
+
+        public static Matrix4 Negated(this Matrix4 value)
+        {
+            return new Matrix4(-value.Row0, -value.Row1, -value.Row2, -value.Row3);
+        }
+
+        public static string ToReadableString(this Vector4 value)
+        {
+            return string.Format("{{ {0,15}, {1,15}, {2,15}, {3,15} }}", value.X, value.Y, value.Z, value.W);
+        }
+
+        public static string ToReadableString(this Matrix4 value)
+        {
+            return value.Row0.ToReadableString() + "\n" + value.Row1.ToReadableString() + "\n" + value.Row2.ToReadableString() + "\n" + value.Row3.ToReadableString();
+        }
     }
 
     public interface IRadixKey

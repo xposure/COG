@@ -108,7 +108,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Folder Include="Rendering\Cameras\" />
+  </ItemGroup>
   <ItemGroup>
     <None Include="Content\Fonts\arial_0.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

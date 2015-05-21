@@ -37,8 +37,10 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AxisAlignedBox2.cs" />
+    <Compile Include="Camera.cs" />
     <Compile Include="DynamicMesh.cs" />
     <Compile Include="Extensions.cs" />
+    <Compile Include="Frustum.cs" />
     <Compile Include="GeometryBatch.cs" />
     <Compile Include="Point.cs" />
     <Compile Include="Program.cs" />

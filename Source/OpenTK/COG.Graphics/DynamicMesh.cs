@@ -126,7 +126,7 @@ namespace COG.Graphics
 
         public void Index(ushort i)
         {
-            if (m_indexPos + 1 >= m_ibufferSize)
+            if (m_indexPos + 1 > m_ibufferSize)
                 GrowIndexBuffer();
 
             m_ibuffer[m_indexPos++] = i;
@@ -134,7 +134,7 @@ namespace COG.Graphics
 
         public void Triangle(ushort i0, ushort i1, ushort i2)
         {
-            if (m_indexPos + 3 >= m_ibufferSize)
+            if (m_indexPos + 3 > m_ibufferSize)
                 GrowIndexBuffer();
 
             m_ibuffer[m_indexPos++] = i0;
@@ -144,7 +144,7 @@ namespace COG.Graphics
 
         public void Quad(ushort tl, ushort tr, ushort br, ushort bl)
         {
-            if (m_indexPos + 6 >= m_ibufferSize)
+            if (m_indexPos + 6 > m_ibufferSize)
                 GrowIndexBuffer();
 
             m_ibuffer[m_indexPos++] = tl;
@@ -158,7 +158,7 @@ namespace COG.Graphics
 
         public void Position(Vector2 v)
         {
-            if (m_vertexPos + 2 >= m_vbufferSize)
+            if (m_vertexPos + 2 > m_vbufferSize)
                 GrowVertexBuffer();
 
             m_vbuffer[m_vertexPos++] = v.X;
@@ -167,7 +167,7 @@ namespace COG.Graphics
 
         public void Position(Vector3 v)
         {
-            if (m_vertexPos + 3 >= m_vbufferSize)
+            if (m_vertexPos + 3 > m_vbufferSize)
                 GrowVertexBuffer();
 
             m_vbuffer[m_vertexPos++] = v.X;
@@ -177,7 +177,7 @@ namespace COG.Graphics
 
         public void Position(float x, float y)
         {
-            if (m_vertexPos + 2 >= m_vbufferSize)
+            if (m_vertexPos + 2 > m_vbufferSize)
                 GrowVertexBuffer();
 
             m_vbuffer[m_vertexPos++] = x;
@@ -186,7 +186,7 @@ namespace COG.Graphics
 
         public void Position(float x, float y, float z)
         {
-            if (m_vertexPos + 3 >= m_vbufferSize)
+            if (m_vertexPos + 3 > m_vbufferSize)
                 GrowVertexBuffer();
 
             m_vbuffer[m_vertexPos++] = x;
@@ -196,7 +196,7 @@ namespace COG.Graphics
 
         public void TextureCoord(Vector2 v)
         {
-            if (m_vertexPos + 2 >= m_vbufferSize)
+            if (m_vertexPos + 2 > m_vbufferSize)
                 GrowVertexBuffer();
 
             m_vbuffer[m_vertexPos++] = v.X;
@@ -205,7 +205,7 @@ namespace COG.Graphics
 
         public void TextureCoord(float u, float v)
         {
-            if (m_vertexPos + 2 >= m_vbufferSize)
+            if (m_vertexPos + 2 > m_vbufferSize)
                 GrowVertexBuffer();
 
             m_vbuffer[m_vertexPos++] = u;
@@ -214,7 +214,7 @@ namespace COG.Graphics
 
         public void Color(Vector3 v)
         {
-            if (m_vertexPos + 3 >= m_vbufferSize)
+            if (m_vertexPos + 3 > m_vbufferSize)
                 GrowVertexBuffer();
 
             m_vbuffer[m_vertexPos++] = v.X;
@@ -224,7 +224,7 @@ namespace COG.Graphics
 
         public void Color(Vector4 v)
         {
-            if (m_vertexPos + 4 >= m_vbufferSize)
+            if (m_vertexPos + 4 > m_vbufferSize)
                 GrowVertexBuffer();
 
             m_vbuffer[m_vertexPos++] = v.X;
@@ -235,7 +235,7 @@ namespace COG.Graphics
 
         public void Color(Color v)
         {
-            if (m_vertexPos + 4 >= m_vbufferSize)
+            if (m_vertexPos + 4 > m_vbufferSize)
                 GrowVertexBuffer();
 
             m_vbuffer[m_vertexPos++] = v.R;
@@ -246,7 +246,7 @@ namespace COG.Graphics
 
         public void Color(float r, float g, float b)
         {
-            if (m_vertexPos + 3 >= m_vbufferSize)
+            if (m_vertexPos + 3 > m_vbufferSize)
                 GrowVertexBuffer();
 
             m_vbuffer[m_vertexPos++] = r;
@@ -256,7 +256,7 @@ namespace COG.Graphics
 
         public void Color(float r, float g, float b, float a)
         {
-            if (m_vertexPos + 4 >= m_vbufferSize)
+            if (m_vertexPos + 4 > m_vbufferSize)
                 GrowVertexBuffer();
 
             m_vbuffer[m_vertexPos++] = r;
