@@ -111,10 +111,10 @@ namespace COG.LibNoise.Operator
                     break;
                 }
             }
-            int i0 = (int)Mathf.Clamp(ip - 2, 0, this.m_data.Count - 1);
-            int i1 = (int)Mathf.Clamp(ip - 1, 0, this.m_data.Count - 1);
-            int i2 = (int)Mathf.Clamp(ip, 0, this.m_data.Count - 1);
-            int i3 = (int)Mathf.Clamp(ip + 1, 0, this.m_data.Count - 1);
+            int i0 = (int)Utility.Clamp(ip - 2, this.m_data.Count - 1, 0);
+            int i1 = (int)Utility.Clamp(ip - 1, this.m_data.Count - 1, 0);
+            int i2 = (int)Utility.Clamp(ip, this.m_data.Count - 1, 0);
+            int i3 = (int)Utility.Clamp(ip + 1, this.m_data.Count - 1, 0);
             if (i1 == i2)
             {
                 return this.m_data[i1].Value;

@@ -2710,6 +2710,15 @@ namespace OpenTK
 
         #endregion ICloneable Implementation
 
+        public static Color Lerp(Color a, Color b, float t)
+        {
+            return new Color(
+                    a.A + (b.A - a.A) * t,
+                    a.R + (b.R - a.R) * t,
+                    a.G + (b.G - a.G) * t,
+                    a.B + (b.B - a.B) * t
+                );
+        }
 
         public static Color FromNonPremultiplied(float a, float r, float g, float b)
         {

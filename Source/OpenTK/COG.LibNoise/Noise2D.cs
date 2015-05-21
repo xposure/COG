@@ -367,8 +367,8 @@ namespace COG.LibNoise
             {
                 for (int x = 0; x < this.m_width; x++)
                 {
-                    Vector3 normX = Vector3.zero;
-                    Vector3 normY = Vector3.zero;
+                    Vector3 normX = Vector3.Zero;
+                    Vector3 normY = Vector3.Zero;
                     Vector3 normalVector = new Vector3();
                     if (x > 0 && y > 0 && x < this.m_width - 1 && y < this.m_height - 1)
                     {
@@ -376,11 +376,11 @@ namespace COG.LibNoise
                         normY = new Vector3(0, (this.m_data[x, y - 1] - this.m_data[x, y + 1]) / 2 * scale, 1);
                         normalVector = normX + normY;
                         normalVector.Normalize();
-                        Vector3 texVector = Vector3.zero;
-                        texVector.x = (normalVector.x + 1) / 2f;
-                        texVector.y = (normalVector.y + 1) / 2f;
-                        texVector.z = (normalVector.z + 1) / 2f;
-                        data[x + y * this.m_height] = new Color(texVector.x, texVector.y, texVector.z);
+                        Vector3 texVector = Vector3.Zero;
+                        texVector.X = (normalVector.X + 1) / 2f;
+                        texVector.Y = (normalVector.Y + 1) / 2f;
+                        texVector.Z = (normalVector.Z + 1) / 2f;
+                        data[x + y * this.m_height] = new Color(texVector.X, texVector.Y, texVector.Z);
                     }
                     else
                     {
@@ -388,11 +388,11 @@ namespace COG.LibNoise
                         normY = new Vector3(0, 0, 1);
                         normalVector = normX + normY;
                         normalVector.Normalize();
-                        Vector3 texVector = Vector3.zero;
-                        texVector.x = (normalVector.x + 1) / 2f;
-                        texVector.y = (normalVector.y + 1) / 2f;
-                        texVector.z = (normalVector.z + 1) / 2f;
-                        data[x + y * this.m_height] = new Color(texVector.x, texVector.y, texVector.z);
+                        Vector3 texVector = Vector3.Zero;
+                        texVector.X = (normalVector.X + 1) / 2f;
+                        texVector.Y = (normalVector.Y + 1) / 2f;
+                        texVector.Z = (normalVector.Z + 1) / 2f;
+                        data[x + y * this.m_height] = new Color(texVector.X, texVector.Y, texVector.Z);
                     }
                 }
             }

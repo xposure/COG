@@ -91,7 +91,7 @@ namespace COG.LibNoise.Generator
         public int OctaveCount
         {
             get { return this.m_octaveCount; }
-            set { this.m_octaveCount = (int)Mathf.Clamp(value, 1, Utils.OctavesMaximum); }
+            set { this.m_octaveCount = (int)Utility.Clamp(value, Utils.OctavesMaximum, 1); }
         }
 
         /// <summary>

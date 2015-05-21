@@ -45,12 +45,12 @@ namespace COG.LibNoise
             Gradient._terrain.m_data.Add(new KeyValuePair<double, Color>(1.0, new Color(255, 255, 255)));
             Gradient._terrain.m_inverted = false;
             Gradient._grayscale.m_data = new List<KeyValuePair<double, Color>>();
-            Gradient._grayscale.m_data.Add(new KeyValuePair<double, Color>(-1.0, Color.black));
-            Gradient._grayscale.m_data.Add(new KeyValuePair<double, Color>(1.0, Color.white));
+            Gradient._grayscale.m_data.Add(new KeyValuePair<double, Color>(-1.0, Color.Black));
+            Gradient._grayscale.m_data.Add(new KeyValuePair<double, Color>(1.0, Color.White));
             Gradient._grayscale.m_inverted = false;
             Gradient._empty.m_data = new List<KeyValuePair<double, Color>>();
-            Gradient._empty.m_data.Add(new KeyValuePair<double, Color>(-1.0, Color.clear));
-            Gradient._empty.m_data.Add(new KeyValuePair<double, Color>(1.0, Color.clear));
+            Gradient._empty.m_data.Add(new KeyValuePair<double, Color>(-1.0, Color.Transparent));
+            Gradient._empty.m_data.Add(new KeyValuePair<double, Color>(1.0, Color.Transparent));
             Gradient._empty.m_inverted = false;
         }
 
@@ -97,8 +97,8 @@ namespace COG.LibNoise
                         break;
                     }
                 }
-                int i0 = (int)Mathf.Clamp(i - 1, 0, this.m_data.Count - 1);
-                int i1 = (int)Mathf.Clamp(i, 0, this.m_data.Count - 1);
+                int i0 = (int)Utility.Clamp(i - 1,  this.m_data.Count - 1, 0);
+                int i1 = (int)Utility.Clamp(i,  this.m_data.Count - 1, 0);
                 if (i0 == i1)
                 {
                     return this.m_data[i1].Value;
@@ -178,8 +178,8 @@ namespace COG.LibNoise
         public void Clear()
         {
             this.m_data.Clear();
-            this.m_data.Add(new KeyValuePair<double, Color>(0.0, Color.clear));
-            this.m_data.Add(new KeyValuePair<double, Color>(1.0, Color.clear));
+            this.m_data.Add(new KeyValuePair<double, Color>(0.0, Color.Transparent));
+            this.m_data.Add(new KeyValuePair<double, Color>(1.0, Color.Transparent));
         }
 
         /// <summary>
