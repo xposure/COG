@@ -386,6 +386,14 @@ namespace COG.Dredger.Rendering
                             if (c != 0)
                             {
                                 var a = maskLayout[n];
+                                if(j ==0 || i == 0 || j == dims[v] - 1 || i == dims[u] - 1)
+                                {
+                                    mask[n] = 0;
+                                    maskLayout[n].data = 4095u;
+                                    ++i; ++n;
+
+                                    continue;
+                                }else
                                 if (disableGreedyMeshing)
                                 {
                                     w = 1;
