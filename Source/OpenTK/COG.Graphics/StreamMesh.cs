@@ -55,7 +55,7 @@ namespace COG.Graphics
             }
         }
 
-        public void Flush()
+        public void Flush(Program program)
         {
             if ((m_vertexPos % m_decl.VertexSize) != 0)
                 throw new Exception("End position was not a multiple of declarations vertex size.");
@@ -70,18 +70,10 @@ namespace COG.Graphics
                 GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
             }
 
-            Render();
-
-            m_vertexPos = 0;
-            //m_indexPos = 0;
-        }
-
-        public void Render()
-        {
             if (m_vbufferID > 0 && m_vertexPos > 0)
             {
                 GL.BindBuffer(BufferTarget.ArrayBuffer, m_vbufferID);
-                m_decl.Enable();
+                m_decl.Enable(program);
                 var vertices = m_vertexPos / m_decl.Size;
 
                 if (m_indexPos == 0)
@@ -91,13 +83,16 @@ namespace COG.Graphics
                 else
                 {
                     GL.BindBuffer(BufferTarget.ElementArrayBuffer, m_ibufferID);
-                    GL.DrawElements(PrimitiveType.Triangles, m_vertexPos / 2 * 3 , DrawElementsType.UnsignedShort, IntPtr.Zero);
+                    GL.DrawElements(PrimitiveType.Triangles, m_vertexPos / 2 * 3, DrawElementsType.UnsignedShort, IntPtr.Zero);
                     GL.BindBuffer(BufferTarget.ElementArrayBuffer, 0);
                 }
-                m_decl.Disable();
+                m_decl.Disable(program);
                 GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
 
             }
+
+            m_vertexPos = 0;
+            //m_indexPos = 0;
         }
 
         private void GrowVertexBuffer()

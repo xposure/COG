@@ -88,7 +88,7 @@ namespace COG.Dredger.States
 
         }
 
-        public void Render(Texture2D texture, double dt)
+        public void Render(Program program, Texture2D texture, double dt)
         {
             GL.DepthMask(false);
             GL.Enable(EnableCap.Blend);
@@ -105,7 +105,7 @@ namespace COG.Dredger.States
 
                 m_renderer.AddQuad(sprite);
             }
-            m_renderer.Render();
+            m_renderer.Render(program);
         }
 
         protected override void DisposedUnmanaged()
@@ -142,7 +142,6 @@ namespace COG.Dredger.States
 
             vertexArrayID = GL.GenVertexArray();
             GL.BindVertexArray(vertexArrayID);
-
 
 
             var decl = new VertexDeclaration();
@@ -359,7 +358,7 @@ namespace COG.Dredger.States
             //m_spriteRenderer.AddQuad(sprite1);
             //m_spriteRenderer.Render();
 
-            m_particles.Render(m_texture, dt);
+            m_particles.Render(m_spriteProgram, m_texture, dt);
 
         }
 

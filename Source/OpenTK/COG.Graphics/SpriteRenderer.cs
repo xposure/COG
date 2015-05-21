@@ -837,15 +837,17 @@ namespace COG.Graphics
 
         //}
 
-        public void Render()
+        public void Render(Program program)
         {
-            renderItem(0, m_renderIndex);
+            program.Bind();
+
+            renderItem(program, 0, m_renderIndex);
             m_renderIndex = 0;
         }
 
-        private void ChangeTexture(Texture2D texture)
+        private void ChangeTexture(Program program, Texture2D texture)
         {
-            m_mesh.Flush();
+            m_mesh.Flush(program);
             m_currentIndex = 0;
             m_currentTexture = texture;
 
@@ -855,9 +857,9 @@ namespace COG.Graphics
 
         }
 
-        private void renderItem(int start, int length)
+        private void renderItem(Program program, int start, int length)
         {
-            ChangeTexture(m_quads[start].Texture);
+            ChangeTexture(program, m_quads[start].Texture);
 
             for (var i = start; i < start + length; i++)
             {
@@ -865,7 +867,7 @@ namespace COG.Graphics
                 {
                     m_currentIndex += 4;
                     if (m_currentTexture.TextureID != quad.Texture.TextureID || (m_currentIndex / 2 * 3) >= 65535)
-                        ChangeTexture(quad.Texture);
+                        ChangeTexture(program, quad.Texture);
 
                     m_mesh.Position(quad.TL.Position);
                     m_mesh.TextureCoord(quad.TL.Texture);
@@ -892,7 +894,7 @@ namespace COG.Graphics
                 }
             }
 
-            ChangeTexture(null);
+            ChangeTexture(program, null);
         }
 
         //private void renderItem(IEnumerable<Quad> items)

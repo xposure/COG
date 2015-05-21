@@ -264,31 +264,31 @@ namespace COG.Graphics
         private static readonly Logger g_logger = Logger.GetLogger(typeof(VertexAttribute));
 
         //protected string m_name;
-        private ushort m_source;
+        private ushort m_location;
         private int m_typeCount;
         private VertexAttribPointerType m_type;
         private VertexElementSemantic m_semantic;
 
-        public VertexAttribute(/*string name, */ ushort source, int typeCount, VertexAttribPointerType type, VertexElementSemantic semantic)
+        public VertexAttribute(/*string name, */ ushort location, int typeCount, VertexAttribPointerType type, VertexElementSemantic semantic)
         {
-            m_source = source;
+            m_location = location;
             m_typeCount = typeCount;
             m_type = type;
             m_semantic = semantic;
         }
 
         //public string Name { get { return m_name; } }
-        public ushort Source { get { return m_source; } }
+        public ushort Location { get { return m_location; } }
         public int TypeCount { get { return m_typeCount; } }
         public VertexAttribPointerType Type { get { return m_type; } }
         public VertexElementSemantic Semantic { get { return m_semantic; } }
 
         public override string ToString()
         {
-            return string.Format("VertexAttribute: {{ Source: {0}, TypeCount: {1}, Type: {2}, Semantic: {3} }}", m_source, m_typeCount, m_type, m_semantic);
+            return string.Format("VertexAttribute: {{ Location: {0}, TypeCount: {1}, Type: {2}, Semantic: {3} }}", m_location, m_typeCount, m_type, m_semantic);
         }
 
-        public static VertexAttribute CreateFromProgram(string name, ushort source, ActiveAttribType attrib)
+        public static VertexAttribute CreateFromProgram(string name, ushort location, ActiveAttribType attrib)
         {
             int typeCount;
             VertexAttribPointerType type;
@@ -297,7 +297,7 @@ namespace COG.Graphics
                 try
                 {
                     var semantic = (VertexElementSemantic)Enum.Parse(typeof(VertexElementSemantic), name, true);
-                    return new VertexAttribute(source, typeCount, type, semantic);
+                    return new VertexAttribute(location, typeCount, type, semantic);
                 }
                 catch
                 {
@@ -387,10 +387,8 @@ namespace COG.Graphics
 
     public class VertexElement
     {
-       
-
         #region Protected
-        protected short m_source;
+        //protected short m_source;
         protected int m_offset;
         protected int m_typeCount;
         protected VertexAttribPointerType m_type;
@@ -398,23 +396,23 @@ namespace COG.Graphics
         #endregion
 
         #region Public
-        public VertexElement(int typeCount, VertexAttribPointerType type, VertexElementSemantic semantic)
-            : this((short)semantic, typeCount, type, semantic)
-        {
+        //public VertexElement(int typeCount, VertexAttribPointerType type, VertexElementSemantic semantic)
+        //    : this((short)semantic, typeCount, type, semantic)
+        //{
 
-        }
+        //}
 
-        public VertexElement(short source, int typeCount, VertexAttribPointerType type, VertexElementSemantic semantic)
+        public VertexElement(/*short source,*/ int typeCount, VertexAttribPointerType type, VertexElementSemantic semantic)
         {
-            m_source = source;
+            //m_source = source;
             m_typeCount = typeCount;
             m_type = type;
             m_semantic = semantic;
         }
 
-        public VertexElement(short source, int offset, int typeCount, VertexAttribPointerType type, VertexElementSemantic semantic)
+        public VertexElement(/*short source,*/ int offset, int typeCount, VertexAttribPointerType type, VertexElementSemantic semantic)
         {
-            m_source = source;
+            //m_source = source;
             m_offset = offset;
             m_typeCount = typeCount;
             m_type = type;
@@ -422,6 +420,7 @@ namespace COG.Graphics
         }
 
         public VertexAttribPointerType Type { get { return m_type; } }
+        
         public int TypeCount { get { return m_typeCount; } }
 
         public VertexElementSemantic Semantic { get { return m_semantic; } }
@@ -430,7 +429,7 @@ namespace COG.Graphics
 
         public int Size { get { return GetTypeSize(m_typeCount, m_type); } }
 
-        public short Source { get { return m_source; } }
+        //public short Source { get { return m_source; } }
 
         public static int GetTypeSize(int typeCount, VertexAttribPointerType type)
         {
@@ -489,7 +488,7 @@ namespace COG.Graphics
 
     public class VertexDeclaration : IEnumerable<VertexElement>
     {
-
+        private static readonly Logger g_logger = Logger.GetLogger(typeof(VertexDeclaration));
 
         protected int m_stride;
         protected List<VertexElement> m_elements;
@@ -505,7 +504,7 @@ namespace COG.Graphics
             var offset = 0;
             for (int i = 0; i < elements.Length; i++)
             {
-                m_elements.Add(new VertexElement(elements[i].Source, offset, elements[i].TypeCount, elements[i].Type, elements[i].Semantic));
+                m_elements.Add(new VertexElement(/*elements[i].Source,*/ offset, elements[i].TypeCount, elements[i].Type, elements[i].Semantic));
                 offset += elements[i].Size;
             }
             m_stride = offset;
@@ -517,7 +516,7 @@ namespace COG.Graphics
             if (m_elements.Count > 0)
                 offset = m_elements[m_elements.Count - 1].Offset + m_elements[m_elements.Count - 1].Size;
 
-            var element = new VertexElement((short)semantic, offset, typeCount, type, semantic);
+            var element = new VertexElement(/*(short)semantic,*/ offset, typeCount, type, semantic);
             m_elements.Add(element);
             m_stride += element.Size;
             return element;
@@ -526,7 +525,7 @@ namespace COG.Graphics
 
         public VertexElement AddElement(int offset, int typeCount, VertexAttribPointerType type, VertexElementSemantic semantic)
         {
-            var element = new VertexElement((short)semantic, offset, typeCount, type, semantic);
+            var element = new VertexElement(/*(short)semantic,*/ offset, typeCount, type, semantic);
             m_elements.Add(element);
             return element;
 
@@ -544,22 +543,36 @@ namespace COG.Graphics
             return null;
         }
 
-        public void Enable()
+        public void Enable(Program program)
         {
             int size = m_elements.Count;
             for (var i = 0; i < size; ++i)
             {
                 var el = m_elements[i];
-                GL.EnableVertexAttribArray(el.Source);
-                GL.VertexAttribPointer(el.Source, el.TypeCount, el.Type, false, m_stride, el.Offset);
+                var attr = program.FindAttributeBySemantic(el.Semantic);
+                if (attr == null)
+                {
+                    g_logger.warn("{0} does not have semantic {1}.", program.Uri, el.Semantic);
+                    continue;
+                }
+
+                GL.EnableVertexAttribArray(attr.Location); ;
+                GL.VertexAttribPointer(attr.Location, el.TypeCount, el.Type, false, m_stride, el.Offset);
             }
         }
 
-        public void Disable()
+        public void Disable(Program program)
         {
             int size = m_elements.Count;
             for (var i = 0; i < size; ++i)
-                GL.DisableVertexAttribArray(m_elements[i].Source);
+            {
+                var el = m_elements[i];
+                var attr = program.FindAttributeBySemantic(el.Semantic);
+                if (attr == null)
+                    continue;
+
+                GL.DisableVertexAttribArray(attr.Location);
+            }
         }
 
         public VertexElement this[int index]

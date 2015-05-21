@@ -78,12 +78,13 @@ namespace COG.Graphics
             }
         }
 
-        public void Render()
+        public void Render(Program program)
         {
+            program.Bind();
             if (m_vbufferID > 0 && m_vertexPos > 0)
             {
                 GL.BindBuffer(BufferTarget.ArrayBuffer, m_vbufferID);
-                m_decl.Enable();
+                m_decl.Enable(program);
                 var vertices = m_vertexPos / m_decl.Size;
 
                 if (m_indexPos == 0)
@@ -96,7 +97,7 @@ namespace COG.Graphics
                     GL.DrawElements(PrimitiveType.Triangles, m_indexPos, DrawElementsType.UnsignedShort, IntPtr.Zero);
                     GL.BindBuffer(BufferTarget.ElementArrayBuffer, 0);
                 }
-                m_decl.Disable();
+                m_decl.Disable(program);
                 GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
 
             }

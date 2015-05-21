@@ -11,6 +11,7 @@ using OpenTK.Graphics.OpenGL4;
 
 namespace COG.Graphics
 {
+    #region Shader
     public abstract class Shader : DisposableObject, IAsset<TextData>
     {
         private static readonly Logger g_logger = Logger.GetLogger(typeof(Shader));
@@ -35,8 +36,6 @@ namespace COG.Graphics
             Destroy();
 
             m_shaderID = GL.CreateShader(m_shaderType);
-
-            //Console.WriteLine("Compiling shader {0}:{1}", shaderType, path);
 
             var code = t.Content;
             GL.ShaderSource(m_shaderID, code);
@@ -68,7 +67,9 @@ namespace COG.Graphics
             Destroy();
         }
     }
+    #endregion Shader
 
+    #region VertexShader
     public class VertexShader : Shader
     {
         public static readonly AssetType VERTEX = AssetType.Create("VERTEX");
@@ -79,7 +80,9 @@ namespace COG.Graphics
 
         }
     }
+    #endregion VertexShader
 
+    #region FragmentShader
     public class FragmentShader : Shader
     {
         public static readonly AssetType FRAGMENT = AssetType.Create("FRAGMENT");
@@ -90,7 +93,9 @@ namespace COG.Graphics
 
         }
     }
+    #endregion FragmentShader
 
+    #region ProgramData
     public class ProgramData : DisposableObject, IAssetData
     {
         private Shader[] m_shaders;
@@ -115,7 +120,9 @@ namespace COG.Graphics
             }
         }
     }
+    #endregion ProgramData
 
+    #region Program
     public class Program : DisposableObject, IAsset<ProgramData>
     {
         public static readonly AssetType PROGRAM = AssetType.Create("PROGRAM");
@@ -134,9 +141,31 @@ namespace COG.Graphics
             Reload(data);
         }
 
+        #region Properties
         public int ProgramID { get { return m_programID; } }
+        
         public AssetUri Uri { get { return m_uri; } }
+        
         public bool IsValid { get { return m_programID != 0; } }
+
+        public IEnumerable<VertexAttribute> Attributes
+        {
+            get
+            {
+                foreach (var attr in m_attributes)
+                    yield return attr;
+            }
+        }
+
+        public IEnumerable<VertexUniform> Uniforms
+        {
+            get
+            {
+                foreach (var uni in m_uniforms)
+                    yield return uni;
+            }
+        }
+        #endregion Properties
 
         public void Bind()
         {
@@ -275,6 +304,16 @@ namespace COG.Graphics
             m_programID = 0;
         }
 
+
+        public VertexAttribute FindAttributeBySemantic(VertexElementSemantic semantic)
+        {
+            foreach (var attr in m_attributes)
+                if (attr.Semantic == semantic)
+                    return attr;
+
+            return null;
+        }
+
         private VertexUniform GetUniform(string name)
         {
             for (var i = 0; i < m_uniforms.Count; i++)
@@ -307,5 +346,6 @@ namespace COG.Graphics
             return true;
         }
     }
+    #endregion Program
 
 }
