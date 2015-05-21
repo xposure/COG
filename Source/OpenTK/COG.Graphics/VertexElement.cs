@@ -654,6 +654,31 @@ namespace COG.Graphics
     //}
 
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
+    public struct VertexPositionColor
+    {
+        public static readonly VertexDeclaration VertexDeclaration;
+
+        static VertexPositionColor()
+        {
+            VertexElement[] elements = new VertexElement[] {
+                new VertexElement(3, VertexAttribPointerType.Float, VertexElementSemantic.Position), 
+                new VertexElement(4, VertexAttribPointerType.Float, VertexElementSemantic.Color)
+            };
+            VertexDeclaration declaration = new VertexDeclaration(elements);
+            VertexDeclaration = declaration;
+        }
+
+        public Vector3 Position;
+        public Color Color;
+
+        public VertexPositionColor(Vector3 position, Color color)
+        {
+            Position = position;
+            Color = color;
+        }
+    }
+
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public struct VertexPositionTextureColor
     {
         public static readonly VertexDeclaration VertexDeclaration;
@@ -670,8 +695,8 @@ namespace COG.Graphics
         }
 
         public Vector3 Position;
-        public Color Color;
         public Vector2 Texture;
+        public Color Color;
 
         public VertexPositionTextureColor(Vector3 position, Color color)
         {

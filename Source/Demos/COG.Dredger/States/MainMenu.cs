@@ -1,4 +1,5 @@
 ﻿using System;
+using COG.Dredger.Rendering;
 using COG.Framework;
 using COG.Graphics;
 using OpenTK;
@@ -20,7 +21,6 @@ namespace COG.Dredger.States
             public Vector3 direction;
         }
 
-        private Random rnd = new Random();
         private SpriteRenderer m_renderer;
 
         private int m_particleIndex = 0;
@@ -46,23 +46,14 @@ namespace COG.Dredger.States
                     {
                         var particle = m_particles[m_particleIndex];
                         particle.life = 1;
-                        particle.speed = rnd.Next(50, 100) / 100f;
-                        particle.r = (byte)rnd.Next(0, 255);
-                        particle.g = (byte)rnd.Next(0, 255);
-                        particle.b = (byte)rnd.Next(0, 255);
-                        particle.speed = (float)rnd.NextDouble()  * 2;
-                        particle.direction = new Vector3(rnd.Next(-1000, 1000), rnd.Next(-1000, 1000), rnd.Next(-1000, 1000));
-                        particle.position = new Vector3(
-                            rnd.Next(-100, 100) / 400f,
-                            rnd.Next(-100, 100) / 400f,
-                            rnd.Next(-100, 100) / 400f);
-                        //particle.position = new Vector2(rnd.Next(-1000, 1000), rnd.Next(-1000, 1000));
-                        particle.size = new Vector2(rnd.Next(500, 1000), rnd.Next(500, 1000));
-
-                        particle.direction.Normalize();
-                        //particle.position.Normalize();
-                        particle.size.Normalize();
-                        particle.size *= 0.15f;
+                        particle.speed = Random.Range(0.5f, 1f);
+                        particle.r = (byte)Random.Range(0, 255);
+                        particle.g = (byte)Random.Range(0, 255);
+                        particle.b = (byte)Random.Range(0, 255);
+                        particle.speed = Random.Range(0f, 2f);
+                        particle.direction = Random.Range(-Vector3.One, Vector3.One);
+                        particle.position = Random.Range(-Vector3.One, Vector3.One) / 40f;
+                        particle.size = Random.Range(Vector2.One / 4f, Vector2.One / 2f) * 0.15f;
 
                         m_particles[m_particleIndex] = particle;
                         m_particleIndex++;
@@ -74,7 +65,7 @@ namespace COG.Dredger.States
             var fdt = (float)dt;
             for (var i = 0; i < m_particleIndex; i++)
             {
-                m_particles[i].life -= fdt  ;
+                m_particles[i].life -= fdt;
 
                 if (m_particles[i].life <= 0)
                     m_particles[i--] = m_particles[--m_particleIndex];
@@ -126,13 +117,18 @@ namespace COG.Dredger.States
         private Texture2D m_texture;
         private SpriteRenderer m_spriteRenderer;
         private Program m_program;
+        private Program m_colorProgram;
         private Program m_spriteProgram;
+        private Program m_opaqueChunkProgram;
 
         private int vertexArrayID;
         private DynamicMesh m_mesh;
         private StreamMesh m_mesh2;
         private ParticleEmitter m_particles;
         private AutoVertexUniformMatrix4 m_mvp;
+        private Volume m_volume;
+        private VolumeGenerator m_vgen;
+
         private Atma.Font m_font;
 
         public override void Initialize(Engine engine)
@@ -140,6 +136,9 @@ namespace COG.Dredger.States
             base.Initialize(engine);
 
             m_mvp = engine.Programs.CreateAutoUniformMatrix4("MVP");
+            m_vgen = new VolumeGenerator();
+            m_vgen.enableAO = true;
+            m_vgen.enableGreedy = true;
         }
 
         public override void LoadResources()
@@ -150,12 +149,13 @@ namespace COG.Dredger.States
 
             m_texture = TextureData2D.CreateMetaball(10, TextureData2D.CircleFalloff, TextureData2D.ColorWhite);
             m_program = m_engine.Assets.LoadProgram("dredger:program:simple");
+            m_colorProgram = m_engine.Assets.LoadProgram("dredger:program:color");
+            m_opaqueChunkProgram = m_engine.Assets.LoadProgram("dredger:program:opaqueChunk");
             m_spriteProgram = m_engine.Assets.LoadProgram("dredger:program:sprite");
             m_font = m_engine.Assets.LoadFont("dredger:font:arial");
 
             vertexArrayID = GL.GenVertexArray();
             GL.BindVertexArray(vertexArrayID);
-
 
             var decl = new VertexDeclaration();
             decl.AddElement(3, VertexAttribPointerType.Float, VertexElementSemantic.Position);
@@ -164,10 +164,11 @@ namespace COG.Dredger.States
             m_mesh = new DynamicMesh(decl);
             m_mesh2 = new StreamMesh(decl);
 
+            m_volume = m_vgen.GenerateVolume();
 
             GenerateCube();
 
-            GL.ClearColor(1f, 1f, 1f, 1f);
+            GL.ClearColor(0.5f, 0.5f, 0.5f, 1f);
         }
 
         private void GenerateCube()
@@ -277,8 +278,11 @@ namespace COG.Dredger.States
         {
             base.UnloadResources();
 
-            if(m_font)
+            if (m_font)
                 m_font.Dispose();
+
+            if (m_volume)
+                m_volume.Dispose();
 
             m_particles.Dispose();
             m_spriteRenderer.Dispose();
@@ -300,16 +304,16 @@ namespace COG.Dredger.States
             var Projection = Matrix4.CreatePerspectiveFieldOfView(0.785398163f, 4.0f / 3.0f, 0.1f, 100.0f);
             // Camera matrix
             var View = Matrix4.LookAt(
-                    new Vector3(0,0,3), // Camera is at (4,3,3), in world space
+                    new Vector3(0, 0, 3), // Camera is at (4,3,3), in world space
                     new Vector3(0, 0, 0), // and looks at the origin
                     new Vector3(0, 1, 0) // head is up (set to 0,-1,0 to look upside-down
                 );
-            //var Model = Matrix4.CreateRotationY((float)rotation);
-            var Model = Matrix4.Identity;
+            var Model = Matrix4.CreateRotationY((float)rotation);
+            //var Model = Matrix4.Identity;
 
             m_mvp.SetValue(Model * View * Projection);
 
-            m_particles.Update(dt);
+            //m_particles.Update(dt);
 
             ProcessKeyboard();
             ProcessMouse();
@@ -322,16 +326,19 @@ namespace COG.Dredger.States
             // Enable depth test
             //GL.Disable(EnableCap.Blend);
             GL.DepthMask(true);
+            GL.Enable(EnableCap.CullFace);
+            GL.CullFace(CullFaceMode.Back);
             GL.Enable(EnableCap.DepthTest);
             // Accept fragment if it closer to the camera than the former one
             GL.DepthFunc(DepthFunction.Less);
 
-            GL.ClearColor(0,0,0,1);
+            GL.ClearColor(0.5f, 0.5f, 1f, 1f);
             GL.Clear(ClearBufferMask.DepthBufferBit | ClearBufferMask.ColorBufferBit);
 
 
-            m_texture.Bind();
             //m_mesh.Render(m_program);
+            m_volume.RenderOpaque(m_opaqueChunkProgram);
+            m_volume.RenderAlpha(m_opaqueChunkProgram);
 
             GL.DepthMask(false);
             GL.Enable(EnableCap.Blend);
@@ -340,10 +347,12 @@ namespace COG.Dredger.States
             sprite1.SetColor(Color.White);
 
             //m_spriteRenderer.AddQuad(sprite1);
+            m_texture.Bind();
             m_spriteRenderer.DrawText(m_font, Vector2.Zero, "DDD");
             m_spriteRenderer.Render(m_spriteProgram);
 
-            m_particles.Render(m_spriteProgram, m_texture, dt);
+
+            //m_particles.Render(m_spriteProgram, m_texture, dt);
         }
 
         private void ProcessKeyboard()
