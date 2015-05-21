@@ -21,45 +21,20 @@ namespace Atma
         private Dictionary<long, int> m_characterKerning;
         private FontData m_fontFile;
         private Texture2D[] m_texturePages;
-        //private TextureRef _texture;
-        //private SpriteBatch m_batch = new SpriteBatch();
-        //private AssetManager _manager;
         private AssetManager m_assets;
 
         public Font(AssetUri uri, AssetManager assets, FontData fontFile)
             : base(uri)
         {
-
             m_fontFile = fontFile;
             m_assets = assets;
 
             Reload(fontFile);
-
-            //_fontFile = fontFile;
-            //_material = Root.instance.assets.loadAsset<Texture2D, TextureData>(fontTexture);
-            //_material.SetBlendState( BlendState.NonPremultiplied);
-            //_material.textureName = fontTexture;
-
-            //_texture = Root.instance.resources.findTexture(fontTexture);
-
-            //_characterMap = new Dictionary<char, FontCharacter>();
-
-            //foreach (var fontCharacter in _fontFile.Chars)
-            //{
-            //    char c = (char)fontCharacter.ID;
-            //    _characterMap.Add(c, fontCharacter);
-            //    if (fontCharacter.Height + fontCharacter.YOffset > MaxLineHeight)
-            //        MaxLineHeight = fontCharacter.Height + fontCharacter.YOffset;
-            //}
         }
 
         public override void Reload(FontData t)
         {
             m_texturePages = new Texture2D[m_fontFile.Pages.Count];
-
-            //var mdata = new MaterialData();
-            //mdata.SetBlendOpaque();
-            //mdata.SetSamplerPointClamp();
 
             for (var i = 0; i < m_texturePages.Length; i++)
             {
@@ -69,14 +44,8 @@ namespace Atma
                     file = file.Substring(0, index);
 
                 m_texturePages[i] = m_assets.LoadTexture(new AssetUri(Uri.Module, "TEXTURE", file));
-                //m_texturePages[i] = _manager.getTexture(new GameUri(Uri.Module, file));
             }
 
-            //_material = CoreRegistry.require<ResourceManager>(ResourceManager.Uri).createMaterialFromTexture(fontTexture, fontTexture);
-            //_material.SetBlendState( BlendState.NonPremultiplied);
-            //_material.textureName = fontTexture;
-
-            //_texture = Root.instance.resources.findTexture(fontTexture);
 
             MaxLineHeight = 0;
             m_characterMap = new Dictionary<char, FontCharacter>(m_fontFile.Chars.Count);
@@ -84,7 +53,6 @@ namespace Atma
             {
                 var c = (char)fontCharacter.ID;
                 m_characterMap.Add(c, fontCharacter);
-                //fontCharacter.material = m_texturePages[fontCharacter.Page];
                 if (fontCharacter.Height + fontCharacter.YOffset > MaxLineHeight)
                     MaxLineHeight = fontCharacter.Height + fontCharacter.YOffset;
 
@@ -95,19 +63,12 @@ namespace Atma
             {
                 m_characterKerning.Add(((long)fk.First << 32) + fk.Second, fk.Amount);
             }
-            //_characterKerning.Add(((long)(char)'t' << 32) + (long)(char)'u', 1);
-            //_characterKerning.Add(((long)(char)'u' << 32) + (long)(char)'v', -1);
 
         }
 
 
 
         public int MaxLineHeight { get; private set; }
-
-        //internal void DrawText(int renderQueue, Vector2 pos, float scale, string text, Color color)
-        //{
-        //    DrawText(renderQueue, pos, scale, text, color, 0);
-        //}
 
         public bool CanFit(string text, float width)
         {
@@ -116,7 +77,7 @@ namespace Atma
 
         public Vector2 MeasureString(string text, Vector2 maxSize)
         {
-            if(Real.IsPositiveInfinity(maxSize.X))
+            if (Real.IsPositiveInfinity(maxSize.X))
                 return MeasureString(text);
 
             var size = Vector2.Zero;
@@ -209,12 +170,12 @@ namespace Atma
             return index;
         }
 
-        internal void DrawText(SpriteRenderer rm, int renderQueue, Vector2 pos, float scale, string text, Color color, float depth)
+        internal void DrawText(SpriteRenderer rm, Vector2 pos, float scale, string text, Color color, float depth)
         {
-            DrawText(rm, renderQueue, pos, scale, text, color, depth, null);
+            DrawText(rm, pos, scale, text, color, depth, null);
         }
 
-        internal void DrawText(SpriteRenderer rm, int renderQueue, Vector2 pos, float scale, string text, Color color, float depth, float? width)
+        internal void DrawText(SpriteRenderer rm, Vector2 pos, float scale, string text, Color color, float depth, float? width)
         {
             float dx = (float)Math.Floor(pos.X);
             float dy = (float)Math.Floor(pos.Y);
@@ -235,12 +196,12 @@ namespace Atma
 
 
                     var uv0 = m_texturePages[fc.Page].GetUV(fc.X, fc.Y);
-                    var uv1 = m_texturePages[fc.Page].GetUV(fc.X + fc.Width, fc.Y +fc.Height);
+                    var uv1 = m_texturePages[fc.Page].GetUV(fc.X + fc.Width, fc.Y + fc.Height);
                     //var sourceRectangle = AxisAlignedBox2.FromRect(fc.X, fc.Y, fc.Width, fc.Height);// AxisAlignedBox2.FromRect(fc.X, fc.Y, fc.Width, fc.Height);
                     var destRectangle = AxisAlignedBox2.FromRect((int)(dx + fc.XOffset * scale), (int)(dy + fc.YOffset * scale), (int)(fc.Width * scale), (int)(fc.Height * scale));
                     //var position = new Vector2(dx + fc.XOffset, dy + fc.YOffset);
 
-                    var sprite = Sprite.Create(m_texturePages[fc.Page], destRectangle.X0 * 0.01f, destRectangle.Y1 * 0.01f, destRectangle.X1 * 0.01f, destRectangle.Y0 * 0.01f);
+                    var sprite = Sprite.Create(m_texturePages[fc.Page], destRectangle.X0, destRectangle.Y1, destRectangle.X1, destRectangle.Y0);
                     sprite.SetDepth(depth);
                     sprite.SetColor(color);
                     sprite.SetTexture(uv0, uv1);
@@ -256,7 +217,7 @@ namespace Atma
             //m_batch.End();
         }
 
-        internal void DrawWrappedOnWordText(SpriteRenderer rm, int renderQueue, Vector2 pos, float scale, string text, Color color, float depth, Vector2 size)
+        internal void DrawWrappedOnWordText(SpriteRenderer rm, Vector2 pos, float scale, string text, Color color, float depth, Vector2 size)
         {
             float dx = (float)Math.Floor(pos.X);
             float dy = (float)Math.Floor(pos.Y);
@@ -278,14 +239,14 @@ namespace Atma
                         var c = text[i];
                         FontCharacter fc;
                         if (m_characterMap.TryGetValue(c, out fc))
-                        {                           
+                        {
                             var kernKey = ((long)prevChar << 32) + fc.ID;
                             var kernAmount = 0;
                             m_characterKerning.TryGetValue(kernKey, out kernAmount);
                             dx += kernAmount * scale;
 
                             var uv0 = m_texturePages[fc.Page].GetUV(fc.X, fc.Y);
-                            var uv1 = m_texturePages[fc.Page].GetUV(fc.Width, fc.Height);
+                            var uv1 = m_texturePages[fc.Page].GetUV(fc.X + fc.Width, fc.Y + fc.Height);
                             //var sourceRectangle = AxisAlignedBox2.FromRect(fc.X, fc.Y, fc.Width, fc.Height);// AxisAlignedBox2.FromRect(fc.X, fc.Y, fc.Width, fc.Height);
                             var destRectangle = AxisAlignedBox2.FromRect((int)(dx + fc.XOffset * scale), (int)(dy + fc.YOffset * scale), (int)(fc.Width * scale), (int)(fc.Height * scale));
 

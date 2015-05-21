@@ -11,7 +11,6 @@ using OpenTK;
 
 public static class FontExtensions
 {
-
     public static Font LoadFont(this AssetManager m_assets, AssetUri uri)
     {
         return m_assets.LoadAsset<Font, FontData>(uri);
@@ -37,26 +36,26 @@ public static class FontExtensions
 
     public static void DrawText(this SpriteRenderer rm, Font font, Vector2 pos, string text, Color? color = null, float depth = 0f, int renderQueue = 0, float scale = 1f)
     {
-        rm.DrawText(renderQueue, font, scale, pos, text, color ?? Color.White, depth);
+        rm.DrawText(font, scale, pos, text, color ?? Color.White, depth);
     }
 
-    public static void DrawText(this SpriteRenderer rm, int renderQueue, Font font, float scale, Vector2 pos, string text, Color color, float depth)
+    public static void DrawText(this SpriteRenderer rm, Font font, float scale, Vector2 pos, string text, Color color, float depth)
     {
-        font.DrawText(rm, renderQueue, pos, scale, text, color, depth);
+        font.DrawText(rm, pos, scale, text, color, depth);
     }
 
-    public static void DrawText(this SpriteRenderer rm, int renderQueue, Font font, Vector2 pos, float scale, string text, Color color, float depth)
+    public static void DrawText(this SpriteRenderer rm, Font font, Vector2 pos, float scale, string text, Color color, float depth)
     {
-        font.DrawText(rm, renderQueue, pos, scale, text, color, depth, null);
+        font.DrawText(rm, pos, scale, text, color, depth, null);
     }
 
-    public static void DrawText(this SpriteRenderer rm, int renderQueue, Font font, Vector2 pos, float scale, string text, Color color, float depth, float? width)
+    public static void DrawText(this SpriteRenderer rm, Font font, Vector2 pos, float scale, string text, Color color, float depth, float? width)
     {
-        font.DrawText(rm, renderQueue, pos, scale, text, color, depth, width);
+        font.DrawText(rm, pos, scale, text, color, depth, width);
     }
 
-    public static void DrawWrappedOnWordText(this SpriteRenderer rm, int renderQueue, Font font, Vector2 pos, float scale, string text, Color color, float depth, Vector2 size)
+    public static void DrawWrappedOnWordText(this SpriteRenderer rm, Font font, Vector2 pos, float scale, string text, Color color, float depth, Vector2 size)
     {
-        font.DrawWrappedOnWordText(rm, renderQueue, pos, scale, text, color, depth, size);
+        font.DrawWrappedOnWordText(rm, pos, scale, text, color, depth, size);
     }
 }
