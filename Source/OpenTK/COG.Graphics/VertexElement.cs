@@ -77,7 +77,7 @@ namespace COG.Graphics
 
             if(typeCount == -1 || semantic == VertexUniformSemantic.Unknown || type == VertexUniformType.Unknown)            
             {
-                g_logger.error("Unsupported uniform {0} with type {1}.", name, uniform);
+                g_logger.Error("Unsupported uniform {0} with type {1}.", name, uniform);
                 return null;
             }
 
@@ -301,7 +301,7 @@ namespace COG.Graphics
                 }
                 catch
                 {
-                    g_logger.error("Semantic '{0}' is not valid.", name);
+                    g_logger.Error("Semantic '{0}' is not valid.", name);
                     //throw error
                 }
 
@@ -552,7 +552,7 @@ namespace COG.Graphics
                 var attr = program.FindAttributeBySemantic(el.Semantic);
                 if (attr == null)
                 {
-                    g_logger.warn("{0} does not have semantic {1}.", program.Uri, el.Semantic);
+                    g_logger.Warn("{0} does not have semantic {1}.", program.Uri, el.Semantic);
                     continue;
                 }
 

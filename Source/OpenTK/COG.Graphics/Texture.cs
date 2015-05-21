@@ -52,22 +52,6 @@ namespace COG.Graphics
 
                 bitmap.UnlockBits(bd);
 
-                //var ugh = 0;
-                //for (var i = 0; i < bgraData.Length; i++)
-                //{
-                //    if (++ugh == 4)
-                //    {
-                //        ugh = 0;
-                //        continue;
-                //    }
-                //    bgraData[i] = 0;
-                //}
-
-                //for (var i = 3; i < bgraData.Length; i+=4)
-                //{
-                //    bgraData[i] = 0;
-                //}
-
                 return new TextureData2D(bgraData, bitmap.Width, bitmap.Height, PixelInternalFormat.Rgba, PixelFormat.Rgba, PixelType.UnsignedByte);
             }
         }

@@ -38,7 +38,7 @@ namespace COG.Assets
         {
             if (m_entries.ContainsKey(ae.Uri))
             {
-                logger.warn("{0} already existed", ae.Uri);
+                logger.Warn("{0} already existed", ae.Uri);
             }
 
             m_entries[ae.Uri] = ae;

@@ -304,7 +304,7 @@ namespace COG.Dredger.States
 
             m_mvp.SetValue(Model * View * Projection);
 
-            //m_particles.Update(dt);
+            m_particles.Update(dt);
 
             ProcessKeyboard();
             ProcessMouse();
@@ -334,10 +334,11 @@ namespace COG.Dredger.States
             var sprite1 = Sprite.Create(m_texture, -1, 1, 1, -1);
             sprite1.SetColor(Color.White);
 
-            m_spriteRenderer.AddQuad(sprite1);
+            //m_spriteRenderer.AddQuad(sprite1);
+            m_spriteRenderer.DrawText(m_font, Vector2.Zero, "DDD");
             m_spriteRenderer.Render(m_spriteProgram);
 
-            //m_particles.Render(m_spriteProgram, m_texture, dt);
+            m_particles.Render(m_spriteProgram, m_texture, dt);
         }
 
         private void ProcessKeyboard()

@@ -31,7 +31,7 @@ namespace COG.Logging
             log(module, "info", message);
         }
 
-        public void info(string message, params object[] args)
+        public void Info(string message, params object[] args)
         {
             log(module, "info", string.Format(message, args));
         }
@@ -41,7 +41,7 @@ namespace COG.Logging
             log(module, "warn", message);
         }
 
-        public void warn(string message, params object[] args)
+        public void Warn(string message, params object[] args)
         {
             log(module, "warn", string.Format(message, args));
         }
@@ -51,7 +51,7 @@ namespace COG.Logging
             log(module, "error", message);
         }
 
-        public void error(string message, params object[] args)
+        public void Error(string message, params object[] args)
         {
             log(module, "error", string.Format(message, args));
         }

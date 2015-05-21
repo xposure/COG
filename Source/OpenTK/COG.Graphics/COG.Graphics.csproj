@@ -40,7 +40,6 @@
     <Compile Include="DynamicMesh.cs" />
     <Compile Include="Extensions.cs" />
     <Compile Include="GeometryBatch.cs" />
-    <Compile Include="IMRenderer.cs" />
     <Compile Include="Point.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

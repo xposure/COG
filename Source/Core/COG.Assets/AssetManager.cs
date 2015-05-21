@@ -151,7 +151,7 @@ namespace COG.Assets
             var assetEntry = FindAsset(uri);
             if (assetEntry == null)
             {
-                m_logger.warn("Unable to resolve asset: {0}", uri);
+                m_logger.Warn("Unable to resolve asset: {0}", uri);
                 return default(U);
             }
 
@@ -169,7 +169,7 @@ namespace COG.Assets
         {
             if (!uri.IsValid())
             {
-                m_logger.warn("Invalid asset uri: {0}", uri);
+                m_logger.Warn("Invalid asset uri: {0}", uri);
                 return default(T);
             }
 
@@ -180,7 +180,7 @@ namespace COG.Assets
             AssetFactory<IAssetData, IAsset> factory;
             if (!m_factories.TryGetValue(uri.Type.ToLower(), out factory))
             {
-                m_logger.warn("Unsupported asset type: {0}", uri.Type);
+                m_logger.Warn("Unsupported asset type: {0}", uri.Type);
                 return default(T);
             }
 
@@ -191,13 +191,13 @@ namespace COG.Assets
             asset = factory(uri, data);
             if (asset == null)
             {
-                m_logger.error("factory '{0}' returned null", typeof(T));
+                m_logger.Error("factory '{0}' returned null", typeof(T));
                 return default(T);
             }
 
             if (!(asset is T))
             {
-                m_logger.error("factory returned a type '{0} 'that wasn't of '{1}'", asset.GetType(), typeof(T));
+                m_logger.Error("factory returned a type '{0} 'that wasn't of '{1}'", asset.GetType(), typeof(T));
                 return default(T);
             }
 
@@ -211,7 +211,7 @@ namespace COG.Assets
         {
             if (!uri.IsValid())
             {
-                m_logger.warn("Invalid asset uri: {0}", uri);
+                m_logger.Warn("Invalid asset uri: {0}", uri);
                 return default(T);
             }
 
@@ -219,7 +219,7 @@ namespace COG.Assets
             AssetFactory<IAssetData, IAsset> factory;
             if (!m_factories.TryGetValue(type.nameNormalized, out factory))
             {
-                m_logger.warn("Unsupported asset type: {0}", uri.Type);
+                m_logger.Warn("Unsupported asset type: {0}", uri.Type);
                 return default(T);
             }
 
@@ -230,7 +230,7 @@ namespace COG.Assets
 
             if (t != null)
             {
-                m_logger.error("factory returned a type '{0} 'that wasn't of T", t.GetType());
+                m_logger.Error("factory returned a type '{0} 'that wasn't of T", t.GetType());
             }
 
             return default(T);
@@ -242,7 +242,7 @@ namespace COG.Assets
             var uri = asset.Uri;
             if (!uri.IsValid())
             {
-                m_logger.warn("Invalid asset uri: {0}", uri);
+                m_logger.Warn("Invalid asset uri: {0}", uri);
                 return default(T);
             }
 

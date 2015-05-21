@@ -48,7 +48,7 @@ namespace COG.Assets
         {
             if (!System.IO.Directory.Exists(_directory))
             {
-                g_logger.error("Directory not found '{0}'", _directory);
+                g_logger.Error("Directory not found '{0}'", _directory);
                 return;
             }
 
@@ -66,7 +66,7 @@ namespace COG.Assets
                     var uri = getAssetUri(relFile, out extension);
                     if (!uri.IsValid())
                     {
-                        g_logger.error("Could not get a valid uri for '{0}'", relFile);
+                        g_logger.Error("Could not get a valid uri for '{0}'", relFile);
                         continue;
                     }
 

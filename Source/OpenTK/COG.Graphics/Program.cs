@@ -46,7 +46,7 @@ namespace COG.Graphics
             if (result != 1)
             {
                 var info = GL.GetShaderInfoLog(m_shaderID);
-                g_logger.error("Could not compile {0} shader {1} with following error: {2}", m_shaderType, Uri, info);
+                g_logger.Error("Could not compile {0} shader {1} with following error:\n {2}", m_shaderType, Uri, info);
 
                 Destroy();
             }
@@ -205,12 +205,11 @@ namespace COG.Graphics
                 {
                     var uniformName = name.ToString();
                     int location = GL.GetUniformLocation(m_programID, uniformName);
-                    g_logger.info("Uniform: {0}, {1}, {2}", uniformName, location, type);
                     var element = VertexUniform.CreateFromProgram(uniformName, (ushort)location, type);
 
                     if (element == null)
                     {
-                        g_logger.error("{0} failed to process uniforms.", m_uri);
+                        g_logger.Error("{0} failed to process uniforms.", m_uri);
                         return false;
                     }
 
@@ -247,7 +246,7 @@ namespace COG.Graphics
 
                     if (attribute == null)
                     {
-                        g_logger.error("{0} failed to process attributes.", m_uri);
+                        g_logger.Error("{0} failed to process attributes.", m_uri);
                         return false;
                     }
 
@@ -273,7 +272,7 @@ namespace COG.Graphics
             if (result != 1)
             {
                 var info = GL.GetProgramInfoLog(m_programID);
-                g_logger.error("Failed to link program {0} with error: {1}", Uri, info);
+                g_logger.Error("Failed to link program {0} with error:\n {1}", Uri, info);
                 Destroy();
             }
             else
@@ -317,13 +316,13 @@ namespace COG.Graphics
             var uniform = GetUniform(name);
             if (uniform == null)
             {
-                g_logger.warn("{0} uniform {1} doesn't exist.", m_uri, name);
+                g_logger.Warn("{0} uniform {1} doesn't exist.", m_uri, name);
                 return false;
             }
 
             if (uniform.Semantic != VertexUniformSemantic.Matrix4)
             {
-                g_logger.warn("{0} uniform {1} is not a Matrix4.", m_uri, name);
+                g_logger.Warn("{0} uniform {1} is not a Matrix4.", m_uri, name);
                 return false;
             }
 

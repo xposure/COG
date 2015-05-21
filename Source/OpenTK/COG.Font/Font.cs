@@ -235,12 +235,12 @@ namespace Atma
 
 
                     var uv0 = m_texturePages[fc.Page].GetUV(fc.X, fc.Y);
-                    var uv1 = m_texturePages[fc.Page].GetUV(fc.Width, fc.Height);
+                    var uv1 = m_texturePages[fc.Page].GetUV(fc.X + fc.Width, fc.Y +fc.Height);
                     //var sourceRectangle = AxisAlignedBox2.FromRect(fc.X, fc.Y, fc.Width, fc.Height);// AxisAlignedBox2.FromRect(fc.X, fc.Y, fc.Width, fc.Height);
                     var destRectangle = AxisAlignedBox2.FromRect((int)(dx + fc.XOffset * scale), (int)(dy + fc.YOffset * scale), (int)(fc.Width * scale), (int)(fc.Height * scale));
                     //var position = new Vector2(dx + fc.XOffset, dy + fc.YOffset);
 
-                    var sprite = Sprite.Create(m_texturePages[fc.Page], destRectangle.X0, destRectangle.Y1, destRectangle.X1, destRectangle.Y0);
+                    var sprite = Sprite.Create(m_texturePages[fc.Page], destRectangle.X0 * 0.01f, destRectangle.Y1 * 0.01f, destRectangle.X1 * 0.01f, destRectangle.Y0 * 0.01f);
                     sprite.SetDepth(depth);
                     sprite.SetColor(color);
                     sprite.SetTexture(uv0, uv1);
