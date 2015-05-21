@@ -120,6 +120,8 @@ namespace COG.Dredger.Rendering
         {
             var p = new Vector3(X, 0, Z);
             var m = Matrix4.CreateTranslation(p);
+
+            program.SetUniformMatrix4("model", m);
             opaqueMesh.Render(program);
         }
 
@@ -127,6 +129,8 @@ namespace COG.Dredger.Rendering
         {
             var p = new Vector3(X, 0, Z);
             var m = Matrix4.CreateTranslation(p);
+            
+            program.SetUniformMatrix4("model", m);
             waterMesh.Render(program);
         }
     }

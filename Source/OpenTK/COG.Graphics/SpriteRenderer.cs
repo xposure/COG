@@ -839,8 +839,13 @@ namespace COG.Graphics
 
         public void Render(Program program)
         {
-            program.Bind();
+            Render(program, Matrix4.Identity);
+        }
 
+        public void Render(Program program, Matrix4 model)
+        {
+            program.Bind();
+            program.SetUniformMatrix4("model", model);
             renderItem(program, 0, m_renderIndex);
             m_renderIndex = 0;
         }

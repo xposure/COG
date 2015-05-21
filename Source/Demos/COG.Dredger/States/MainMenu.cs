@@ -1,4 +1,5 @@
 ﻿using System;
+using COG.Dredger.Logic;
 using COG.Dredger.Rendering;
 using COG.Framework;
 using COG.Graphics;
@@ -99,6 +100,7 @@ namespace COG.Dredger.States
 
                 m_renderer.AddQuad(sprite);
             }
+
             m_renderer.Render(program);
         }
 
@@ -125,9 +127,10 @@ namespace COG.Dredger.States
         private DynamicMesh m_mesh;
         private StreamMesh m_mesh2;
         private ParticleEmitter m_particles;
-        private AutoVertexUniformMatrix4 m_mvp;
+        private AutoVertexUniformMatrix4 m_viewProjection;
         private Volume m_volume;
         private VolumeGenerator m_vgen;
+        private ChunkManager m_chunks;
 
         private Atma.Font m_font;
 
@@ -135,7 +138,7 @@ namespace COG.Dredger.States
         {
             base.Initialize(engine);
 
-            m_mvp = engine.Programs.CreateAutoUniformMatrix4("MVP");
+            m_viewProjection = engine.Programs.CreateAutoUniformMatrix4("viewProjection");
             m_vgen = new VolumeGenerator();
             m_vgen.enableAO = true;
             m_vgen.enableGreedy = true;
@@ -153,6 +156,9 @@ namespace COG.Dredger.States
             m_opaqueChunkProgram = m_engine.Assets.LoadProgram("dredger:program:opaqueChunk");
             m_spriteProgram = m_engine.Assets.LoadProgram("dredger:program:sprite");
             m_font = m_engine.Assets.LoadFont("dredger:font:arial");
+            
+            m_chunks = new ChunkManager();
+            m_chunks.Initialize();
 
             vertexArrayID = GL.GenVertexArray();
             GL.BindVertexArray(vertexArrayID);
@@ -284,6 +290,7 @@ namespace COG.Dredger.States
             if (m_volume)
                 m_volume.Dispose();
 
+            m_chunks.Dispose();
             m_particles.Dispose();
             m_spriteRenderer.Dispose();
             m_mesh.Dispose();
@@ -308,10 +315,10 @@ namespace COG.Dredger.States
                     new Vector3(0, 0, 0), // and looks at the origin
                     new Vector3(0, 1, 0) // head is up (set to 0,-1,0 to look upside-down
                 );
-            var Model = Matrix4.CreateRotationY((float)rotation);
+            //var Model = Matrix4.CreateRotationY((float)rotation);
             //var Model = Matrix4.Identity;
 
-            m_mvp.SetValue(Model * View * Projection);
+            m_viewProjection.SetValue(View * Projection);
 
             //m_particles.Update(dt);
 
@@ -351,6 +358,8 @@ namespace COG.Dredger.States
             m_spriteRenderer.DrawText(m_font, Vector2.Zero, "DDD");
             m_spriteRenderer.Render(m_spriteProgram);
 
+            m_chunks.RenderOpaque(m_opaqueChunkProgram);
+            m_chunks.renderAlpha(m_opaqueChunkProgram);
 
             //m_particles.Render(m_spriteProgram, m_texture, dt);
         }

@@ -5,18 +5,15 @@ in vec3 position;
 in vec2 texCoord0;
 in vec4 color;
 
-uniform mat4 MVP;
+uniform mat4 viewProjection;
+uniform mat4 model;
 
 // Output data ; will be interpolated for each fragment.
 out vec2 UV;
-out vec4 c;
+out vec4 COLOR;
 
 void main(){
- 
-    // Output position of the vertex, in clip space : MVP * position
-    vec4 v = vec4(position,1); // Transform an homogeneous 4D vector, remember ?
-    gl_Position = MVP * v;
+    gl_Position = viewProjection * model * vec4(position,1);
 	UV = texCoord0;
-	c = color;
-	//c = vec4(1,1,1,1);
+	COLOR = color;
 }

@@ -40,6 +40,8 @@
     <Compile Include="Config.cs" />
     <Compile Include="Engine.cs" />
     <Compile Include="App.cs" />
+    <Compile Include="Logic\ChunkManager.cs" />
+    <Compile Include="Logic\Generators\SimpleHeightMap.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Rendering\VoxelMeshing.cs" />
     <Compile Include="States\MainMenu.cs" />
@@ -68,6 +70,10 @@
     <ProjectReference Include="..\..\OpenTK\COG.Graphics\COG.Graphics.csproj">
       <Project>{d2d0c5c5-0154-4a6c-a04f-72e2e643b237}</Project>
       <Name>COG.Graphics</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\OpenTK\COG.LibNoise\COG.LibNoise.csproj">
+      <Project>{572e8181-69d0-44d3-a487-68dd81d2c931}</Project>
+      <Name>COG.LibNoise</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
