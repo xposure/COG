@@ -5,6 +5,7 @@ using COG.Framework;
 using COG.Graphics;
 using OpenTK;
 using OpenTK.Graphics.OpenGL4;
+using OpenTK.Input;
 
 
 namespace COG.Dredger.States
@@ -176,6 +177,11 @@ namespace COG.Dredger.States
             m_mesh = new DynamicMesh(decl);
             m_mesh2 = new StreamMesh(decl);
 
+            m_vgen.shape = Shape.DirtWall;
+            m_vgen.width = 16;
+            m_vgen.height = 16;
+            m_vgen.depth = 16;
+            m_vgen.scale = 0.45f ;
             m_volume = m_vgen.GenerateVolume();
 
             GenerateCube();
@@ -306,7 +312,7 @@ namespace COG.Dredger.States
             m_mesh2.Dispose();
         }
 
-        float x = 0;
+        float x = 32;
         public override void Update(double dt)
         {
             rotation += dt;
@@ -319,8 +325,8 @@ namespace COG.Dredger.States
             m_camera.AspectRatio = 4.0f / 3.0f;
             m_camera.Near = 0.1f;
             m_camera.Far = 100f;
-            m_camera.Position = new Vector3(x, 10, 3);
-            m_camera.LookAt(new Vector3(16f, -10f, 16f));
+            m_camera.Position = new Vector3(x, 32, 32);
+            m_camera.LookAt(new Vector3(16f, 16f, 16f));
             m_camera.Update((float)dt);
 
             m_view.SetValue(m_camera.ViewMatrix);
@@ -354,15 +360,15 @@ namespace COG.Dredger.States
 
 
             //m_mesh.Render(m_program);
-            //m_volume.RenderOpaque(m_opaqueChunkProgram);
-            //m_volume.RenderAlpha(m_opaqueChunkProgram);
-            m_chunks.RenderOpaque(m_opaqueChunkProgram);
+            m_volume.RenderOpaque(m_opaqueChunkProgram);
+            m_volume.RenderAlpha(m_opaqueChunkProgram);
+            //m_chunks.RenderOpaque(m_opaqueChunkProgram);
 
 
             GL.DepthMask(false);
             GL.Enable(EnableCap.Blend);
             GL.BlendFunc(BlendingFactorSrc.SrcAlpha, BlendingFactorDest.OneMinusSrcAlpha);
-            m_chunks.renderAlpha(m_opaqueChunkProgram);
+            //m_chunks.renderAlpha(m_opaqueChunkProgram);
             //var sprite1 = Sprite.Create(m_texture, -1, 1, 1, -1);
             //sprite1.SetColor(Color.White);
 
@@ -388,6 +394,17 @@ namespace COG.Dredger.States
 
             if (keyboard[OpenTK.Input.Key.D])
                 x += (float)delta;
+
+            if (keyboard[Key.PageUp])
+            {
+                m_vgen.scale += delta * 0.01f;
+                m_vgen.GenerateVolume();
+            }
+            else if (keyboard[Key.PageDown])
+            {
+                m_vgen.scale -= delta * 0.01f;
+                m_vgen.GenerateVolume();
+            }
 
             if (keyboard[OpenTK.Input.Key.C] )
             {

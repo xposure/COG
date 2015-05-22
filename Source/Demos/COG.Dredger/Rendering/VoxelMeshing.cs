@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using COG.Dredger.Logic;
 using COG.Framework;
 using COG.Graphics;
 using OpenTK;
@@ -57,6 +58,11 @@ namespace COG.Dredger.Rendering
                 if (index < 0 || index > data.Length - 1)
                     return 0;
                 return data[index];
+            }
+            set
+            {
+                if (index >= 0 || index <= data.Length - 1)
+                    data[index] = value;
             }
         }
 
@@ -119,7 +125,7 @@ namespace COG.Dredger.Rendering
         public void RenderOpaque(Program program)
         {
             var p = new Vector3(X, 0, Z);
-            var m = Matrix4.CreateTranslation(p / 8f);
+            var m = Matrix4.CreateTranslation(p) * Matrix4.CreateScale(1f);
 
             program.SetUniformMatrix4("model", m);
             opaqueMesh.Render(program);
@@ -128,8 +134,8 @@ namespace COG.Dredger.Rendering
         public void RenderAlpha(Program program)
         {
             var p = new Vector3(X, 0, Z);
-            var m = Matrix4.CreateTranslation(p / 8f);
-            
+            var m = Matrix4.CreateTranslation(p) * Matrix4.CreateScale(1f);
+
             program.SetUniformMatrix4("model", m);
             waterMesh.Render(program);
         }
@@ -145,8 +151,16 @@ namespace COG.Dredger.Rendering
         public static List<Vector3> normals = new List<Vector3>(65536);
         public static List<Color> colors = new List<Color>(65536);
 
-
         public static Volume makeVoxels(int x, int y, int z, int[] l, int[] h, Func<int, int, int, uint> f)
+        {
+            int[] d = { h[0] - l[0], h[1] - l[1], h[2] - l[2] };
+            uint[] v = new uint[d[0] * d[1] * d[2]];
+            var volume = new Volume(x, y, z, v, new Dimensions(d));
+            makeVoxels(volume, x, y, z, l, h, f);
+            return volume;
+        }
+
+        public static void makeVoxels(Volume volume, int x, int y, int z, int[] l, int[] h, Func<int, int, int, uint> f)
         {
             int[] d = { h[0] - l[0], h[1] - l[1], h[2] - l[2] };
             uint[] v = new uint[d[0] * d[1] * d[2]];
@@ -155,10 +169,9 @@ namespace COG.Dredger.Rendering
                 for (var j = l[1]; j < h[1]; ++j)
                     for (var i = l[0]; i < h[0]; ++i, ++n)
                     {
-                        v[n] = f(i, j, k);
+                        volume[n] = f(i, j, k);
                     }
 
-            return new Volume(x, y, z, v, new Dimensions(d));
         }
 
         public struct MaskLayout
@@ -233,7 +246,7 @@ namespace COG.Dredger.Rendering
             return output / (precision - 1);
         }
 
-        public static int GenerateMesh(Volume volume, bool centered = false, bool disableGreedyMeshing = false, bool disableAO = false, bool hasNeighbors = false)
+        public static int GenerateMesh(Volume volume, bool centered = false, bool disableGreedyMeshing = false, bool disableAO = false, bool hasNeighbors = false, float scale = 1f)
         {
             vertices.Clear();
             faces.Clear();
@@ -396,35 +409,35 @@ namespace COG.Dredger.Rendering
                                     continue;
                                 }
                                 else
-                                if (disableGreedyMeshing)
-                                {
-                                    w = 1;
-                                    h = 1;
-                                }
-                                else
-                                {
-                                    //Compute width
-                                    for (w = 1; c == mask[n + w] && (a.data == (maskLayout[n + w].data)) && i + w < dims[u] - neighborOffset; ++w)
+                                    if (disableGreedyMeshing)
                                     {
+                                        w = 1;
+                                        h = 1;
                                     }
-                                    //Compute height (this is slightly awkward
-                                    var done = false;
-                                    for (h = 1; j + h < dims[v] - neighborOffset; ++h)
+                                    else
                                     {
-                                        for (k = 0; k < w; ++k)
+                                        //Compute width
+                                        for (w = 1; c == mask[n + w] && (a.data == (maskLayout[n + w].data)) && i + w < dims[u] - neighborOffset; ++w)
                                         {
-                                            if (c != mask[n + k + h * dims[u]] || a.data != maskLayout[n + k + h * dims[u]].data)
+                                        }
+                                        //Compute height (this is slightly awkward
+                                        var done = false;
+                                        for (h = 1; j + h < dims[v] - neighborOffset; ++h)
+                                        {
+                                            for (k = 0; k < w; ++k)
                                             {
-                                                done = true;
+                                                if (c != mask[n + k + h * dims[u]] || a.data != maskLayout[n + k + h * dims[u]].data)
+                                                {
+                                                    done = true;
+                                                    break;
+                                                }
+                                            }
+                                            if (done)
+                                            {
                                                 break;
                                             }
                                         }
-                                        if (done)
-                                        {
-                                            break;
-                                        }
                                     }
-                                }
 
                                 //Add quad
                                 x[u] = i; x[v] = j;
@@ -542,7 +555,7 @@ namespace COG.Dredger.Rendering
             mesh.Begin();
             for (var i = 0; i < vertices.Count; i++)
             {
-                mesh.Position(vertices[i] / 8f);
+                mesh.Position(vertices[i] * scale);
                 mesh.TextureCoord(uvs[i]);
                 mesh.Color(colors[i]);
             }
@@ -556,7 +569,7 @@ namespace COG.Dredger.Rendering
             return vertices.Count;
         }
 
-        public static int GenerateWaterMesh(Volume volume, bool centered = false, bool disableGreedyMeshing = false)
+        public static int GenerateWaterMesh(Volume volume, bool centered = false, bool disableGreedyMeshing = false, float scale = 1f)
         {
             vertices.Clear();
             faces.Clear();
@@ -748,7 +761,7 @@ namespace COG.Dredger.Rendering
             mesh.Begin();
             for (var i = 0; i < vertices.Count; i++)
             {
-                mesh.Position(vertices[i] / 8f);
+                mesh.Position(vertices[i] * scale);
                 mesh.TextureCoord(uvs[i]);
                 mesh.Color(colors[i]);
             }
@@ -1253,7 +1266,8 @@ namespace COG.Dredger.Rendering
         Sphere,
         Noise,
         Test,
-        Solid
+        Solid,
+        DirtWall
     }
 
 
@@ -1266,8 +1280,12 @@ namespace COG.Dredger.Rendering
         public int width = 16;
         public int height = 16;
         public int depth = 16;
+        public float scale = 0.15f;
         public Color color = Color.White;
         public bool noiseyColor = true;
+
+        private Volume volume;
+
 
 
         public const int size = 8;
@@ -1327,16 +1345,86 @@ namespace COG.Dredger.Rendering
                         return r;
                     });
                     break;
+                case Shape.DirtWall:
 
+                    var heightMap = Generators.SimpleHeight(526, 811, 372, width + 4, depth + 4, scale, NoiseType.RiggedMultifractal);
+                    var heightMap2 = Generators.SimpleHeight(5726, 8121, 3712, width + 4, depth + 4, scale * scale, NoiseType.RiggedMultifractal);
+
+                    shape_func = new Func<int, int, int, uint>((i, j, k) =>
+                    {
+                        //if (j < heightMap(i + 2, k + 2))
+                        //    return Color.Red.ToRGB();
+
+                        //return 0;
+
+                        var off = 0;
+                        off += (i < 0) ? 1 : 0;
+                        off += (k < 0) ? 1 : 0;
+                        off += (k >= width) ? 1 : 0;
+                        off += (i >= width) ? 1 : 0;
+
+                        if (off > 1)
+                            return 0;
+
+                        if (off == 0 && j == height - 1)
+                        {
+                            return Color.Green.ToRGB();
+                        }
+                        else if (off == 1)
+                        {
+                            var mod = 0;
+                            if (i < 0) mod += -i;
+                            else if (i >= width) mod += i - width + 1;
+                            if (k < 0) mod += -k;
+                            else if (k >= depth) mod += k - depth + 1;
+
+                            var first = heightMap(i + 2, k + 2);
+                            //if (mod == 1)
+                            {
+                                //first /= 2;
+                                //var second = heightMap2(i + 2, k + 2) / 2;
+                                if (j < first / mod)
+                                {
+                                    if (noiseyColor && Random.Range(0f, 1f) < 0.1f)
+                                    {
+                                        return (Color.FromRGBA(0xA1, 0x78, 0x3a, 1) * Random.Range(0.9f, 1f)).ToRGB();
+                                    }
+
+                                    return 0xAE9165;
+                                    //return Color.Red.ToRGB();
+                                }
+                            }
+                            //else if (mod == 2)
+                            //{
+                            //    var second = heightMap(width + 3- (i+2) , depth + 3 - (k+2)) / 4;
+                            //    if (j < second )
+                            //        return Color.Pink.ToRGB();
+                            //}
+
+                            return 0;
+                        }
+
+                        return Color.Brown.ToRGB();
+                    });
+                    break;
             }
 
-            var volume = SurfaceExtractor.makeVoxels(0, 0, 0, new int[] { -width, -height, -depth }, new int[] { width, height, depth }, shape_func);
+            if (!volume)
+            {
+                var w = (width + 2) - -2;
+                var h = (height);
+                var d = (depth + 2) - -2;
+                var dim = new Dimensions(new[] { w, h, d });
+                volume = new Volume(0, 0, 0, new uint[w * h * d], dim);
+            }
+
+            SurfaceExtractor.makeVoxels(volume, 0, 0, 0, new int[] { -2, 0, -2 }, new int[] { width + 2, height, depth + 2 }, shape_func);
 
             //chunk = Assets.Source.Voxels.SurfaceExtractor.makeVoxels(new int[] { 0, 0, 0 }, new int[] { 0, 0, 1 }, solid);
             //chunk = Assets.Source.Voxels.SurfaceExtractor.makeVoxels(new int[] { -16, -16, -16 }, new int[] { 16, 16, 16 }, noise);
             //SurfaceExtractor.disableAO = !enableAO;
             //SurfaceExtractor.disableGreedyMeshing = !enableGreedy;
-            SurfaceExtractor.GenerateMesh(volume, disableGreedyMeshing: !enableGreedy, disableAO: !enableAO, centered: true);
+            SurfaceExtractor.GenerateMesh(volume, disableGreedyMeshing: !enableGreedy, disableAO: !enableAO, centered: false);
             return volume;
 
 

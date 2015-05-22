@@ -171,18 +171,28 @@ namespace OpenTK
         ///		Converts this color value to packed ARBG format.
         /// </summary>
         /// <returns></returns>
-        public int ToARGB()
+        public uint ToARGB()
         {
-            int result = 0;
+            uint result = 0;
 
-            result += ((int)(A * 255.0f)) << 24;
-            result += ((int)(R * 255.0f)) << 16;
-            result += ((int)(G * 255.0f)) << 8;
-            result += ((int)(B * 255.0f));
+            result += ((uint)(A * 255.0f)) << 24;
+            result += ((uint)(R * 255.0f)) << 16;
+            result += ((uint)(G * 255.0f)) << 8;
+            result += ((uint)(B * 255.0f));
 
             return result;
         }
 
+        public uint ToRGB()
+        {
+            uint result = 0;
+
+            result += ((uint)(R * 255.0f)) << 16;
+            result += ((uint)(G * 255.0f)) << 8;
+            result += ((uint)(B * 255.0f));
+
+            return result & 0xffffff;
+        }
         /// <summary>
         ///		Populates the color components in a 4 elements array in RGBA order.
         /// </summary>
@@ -2643,7 +2653,7 @@ namespace OpenTK
         /// <returns></returns>
         public override int GetHashCode()
         {
-            return this.ToARGB();
+            return (int)this.ToARGB();
         }
 
         public override bool Equals(object obj)
