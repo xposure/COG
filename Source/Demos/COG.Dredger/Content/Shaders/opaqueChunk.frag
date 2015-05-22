@@ -21,7 +21,8 @@ void main(){
 				
 	x = x / 2 + 0.5;
 
-	color.a = 1f;
+	//color.a = 1f;
 	//color.a = 0.5f;
 	color.rgb = COLOR.rgb * x;
+	color.a = COLOR.a;
 }

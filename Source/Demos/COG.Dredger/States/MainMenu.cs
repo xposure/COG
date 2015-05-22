@@ -131,7 +131,7 @@ namespace COG.Dredger.States
         private Volume m_volume;
         private VolumeGenerator m_vgen;
         private ChunkManager m_chunks;
-        private Camera m_camera;
+        private DefaultCamera m_camera;
         private bool use_camera = false;
 
         private Atma.Font m_font;
@@ -147,7 +147,7 @@ namespace COG.Dredger.States
             m_vgen = new VolumeGenerator();
             m_vgen.enableAO = true;
             m_vgen.enableGreedy = true;
-            m_camera = new Camera();
+            m_camera = new DefaultCamera();
         }
 
         public override void LoadResources()
@@ -320,8 +320,8 @@ namespace COG.Dredger.States
             m_camera.Near = 0.1f;
             m_camera.Far = 100f;
             m_camera.Position = new Vector3(x, 10, 3);
-            m_camera.LookAt(new Vector3(16f, 0f, 16f));
-
+            m_camera.LookAt(new Vector3(16f, -10f, 16f));
+            m_camera.Update((float)dt);
 
             m_view.SetValue(m_camera.ViewMatrix);
             m_projection.SetValue(m_camera.ProjectionMatrix);
@@ -331,6 +331,7 @@ namespace COG.Dredger.States
 
             if (ProcessKeyboard((float)dt))
             {
+
                       }
             ProcessMouse();
         }
@@ -356,11 +357,12 @@ namespace COG.Dredger.States
             //m_volume.RenderOpaque(m_opaqueChunkProgram);
             //m_volume.RenderAlpha(m_opaqueChunkProgram);
             m_chunks.RenderOpaque(m_opaqueChunkProgram);
-            m_chunks.renderAlpha(m_opaqueChunkProgram);
+
 
             GL.DepthMask(false);
             GL.Enable(EnableCap.Blend);
             GL.BlendFunc(BlendingFactorSrc.SrcAlpha, BlendingFactorDest.OneMinusSrcAlpha);
+            m_chunks.renderAlpha(m_opaqueChunkProgram);
             //var sprite1 = Sprite.Create(m_texture, -1, 1, 1, -1);
             //sprite1.SetColor(Color.White);
 

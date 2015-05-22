@@ -233,7 +233,7 @@ namespace COG.Dredger.Rendering
             return output / (precision - 1);
         }
 
-        public static int GenerateMesh(Volume volume, bool centered = false, bool disableGreedyMeshing = false, bool disableAO = false)
+        public static int GenerateMesh(Volume volume, bool centered = false, bool disableGreedyMeshing = false, bool disableAO = false, bool hasNeighbors = false)
         {
             vertices.Clear();
             faces.Clear();
@@ -241,6 +241,7 @@ namespace COG.Dredger.Rendering
             normals.Clear();
             colors.Clear();
             var dims = volume.dims;
+            var neighborOffset = hasNeighbors ? 1 : 0;
 
             var f = new Func<int, int, int, uint>((i, j, k) =>
             {
@@ -378,22 +379,23 @@ namespace COG.Dredger.Rendering
                     ++x[d];
                     //Generate mesh for mask using lexicographic ordering
                     n = 0;
-                    for (j = 0; j < dims[v]; ++j)
+                    for (j = 0; j < dims[v] - neighborOffset; ++j)
                     {
-                        for (i = 0; i < dims[u]; )
+                        for (i = 0; i < dims[u] - neighborOffset; )
                         {
                             var c = mask[n];
                             if (c != 0)
                             {
                                 var a = maskLayout[n];
-                                if(j ==0 || i == 0 || j == dims[v] - 1 || i == dims[u] - 1)
+                                if (hasNeighbors && (j == 0 || i == 0 || j == dims[v] - 1 || i == dims[u] - 1))
                                 {
                                     mask[n] = 0;
                                     maskLayout[n].data = 4095u;
                                     ++i; ++n;
 
                                     continue;
-                                }else
+                                }
+                                else
                                 if (disableGreedyMeshing)
                                 {
                                     w = 1;
@@ -402,12 +404,12 @@ namespace COG.Dredger.Rendering
                                 else
                                 {
                                     //Compute width
-                                    for (w = 1; c == mask[n + w] && (a.data == (maskLayout[n + w].data)) && i + w < dims[u]; ++w)
+                                    for (w = 1; c == mask[n + w] && (a.data == (maskLayout[n + w].data)) && i + w < dims[u] - neighborOffset; ++w)
                                     {
                                     }
                                     //Compute height (this is slightly awkward
                                     var done = false;
-                                    for (h = 1; j + h < dims[v]; ++h)
+                                    for (h = 1; j + h < dims[v] - neighborOffset; ++h)
                                     {
                                         for (k = 0; k < w; ++k)
                                         {
@@ -695,7 +697,7 @@ namespace COG.Dredger.Rendering
 
                                     for (var o = 0; o < 4; ++o)
                                     {
-                                        colors.Add(new Color(cr, cg, cb));
+                                        colors.Add(new Color(0.5f, cr, cg, cb));
                                         uvs.Add(new Vector2(0, 0));
                                     }
 
