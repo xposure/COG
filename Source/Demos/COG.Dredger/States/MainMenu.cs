@@ -165,7 +165,7 @@ namespace COG.Dredger.States
             m_font = m_engine.Assets.LoadFont("dredger:font:arial");
 
             m_chunks = new ChunkManager();
-            m_chunks.Initialize();
+            //m_chunks.Initialize();
 
             vertexArrayID = GL.GenVertexArray();
             GL.BindVertexArray(vertexArrayID);
@@ -181,12 +181,21 @@ namespace COG.Dredger.States
             m_vgen.width = 16;
             m_vgen.height = 16;
             m_vgen.depth = 16;
-            m_vgen.scale = 0.45f ;
+            m_vgen.scale = 0.45f;
             m_volume = m_vgen.GenerateVolume();
 
             GenerateCube();
 
             GL.ClearColor(0.5f, 0.5f, 0.5f, 1f);
+
+            previous = current = Mouse.GetState();
+
+            m_camera.FieldOfView = 0.785398163f;
+            m_camera.AspectRatio = 4.0f / 3.0f;
+            m_camera.Near = 0.1f;
+            m_camera.Far = 1000f;
+            m_camera.Position = new Vector3(6, 10, 6);
+            //m_camera.LookAt(new Vector3(8, 16,0 ));
         }
 
         private void GenerateCube()
@@ -312,7 +321,7 @@ namespace COG.Dredger.States
             m_mesh2.Dispose();
         }
 
-        float x = 32;
+        float x = 16;
         public override void Update(double dt)
         {
             rotation += dt;
@@ -321,25 +330,21 @@ namespace COG.Dredger.States
             if (rotation > System.Math.PI * 2)
                 rotation -= System.Math.PI * 2;
 
-            m_camera.FieldOfView = 0.785398163f;
-            m_camera.AspectRatio = 4.0f / 3.0f;
-            m_camera.Near = 0.1f;
-            m_camera.Far = 100f;
-            m_camera.Position = new Vector3(x, 32, 32);
-            m_camera.LookAt(new Vector3(16f, 16f, 16f));
-            m_camera.Update((float)dt);
 
-            m_view.SetValue(m_camera.ViewMatrix);
-            m_projection.SetValue(m_camera.ProjectionMatrix);
-            m_viewProjection.SetValue(m_camera.ViewMatrix * m_camera.ProjectionMatrix);
+            m_camera.Update((float)dt);
 
             //m_particles.Update(dt);
 
             if (ProcessKeyboard((float)dt))
             {
 
-                      }
-            ProcessMouse();
+            }
+            ProcessMouse((float)dt);
+
+            m_view.SetValue(m_camera.ViewMatrix);
+            m_projection.SetValue(m_camera.ProjectionMatrix);
+            m_viewProjection.SetValue(m_camera.ViewMatrix * m_camera.ProjectionMatrix);
+
         }
 
         private double rotation = 0;
@@ -377,7 +382,7 @@ namespace COG.Dredger.States
             //m_spriteRenderer.DrawText(m_font, Vector2.Zero, "DDD");
             //m_spriteRenderer.Render(m_spriteProgram);
 
-  
+
 
             //m_particles.Render(m_spriteProgram, m_texture, dt);
         }
@@ -385,45 +390,99 @@ namespace COG.Dredger.States
         private bool c_down = false;
         private bool ProcessKeyboard(float delta)
         {
-            var keyboard = OpenTK.Input.Keyboard.GetState();
-            if (keyboard[OpenTK.Input.Key.Escape])
-                m_engine.Stop("User pressed escape from main menu");
-
-            if (keyboard[OpenTK.Input.Key.A])
-                x -= (float)delta;
-
-            if (keyboard[OpenTK.Input.Key.D])
-                x += (float)delta;
-
-            if (keyboard[Key.PageUp])
+            if (m_engine.GameWindow.Focused)
             {
-                m_vgen.scale += delta * 0.01f;
-                m_vgen.GenerateVolume();
-            }
-            else if (keyboard[Key.PageDown])
-            {
-                m_vgen.scale -= delta * 0.01f;
-                m_vgen.GenerateVolume();
-            }
+                var keyboard = OpenTK.Input.Keyboard.GetState();
+                if (keyboard[OpenTK.Input.Key.Escape])
+                    m_engine.Stop("User pressed escape from main menu");
 
-            if (keyboard[OpenTK.Input.Key.C] )
-            {
-                if (!c_down)
+                if (keyboard[OpenTK.Input.Key.A])
+                    x -= (float)delta;
+
+                if (keyboard[OpenTK.Input.Key.D])
+                    x += (float)delta;
+
+                if (keyboard[Key.PageUp])
                 {
-                    use_camera = !use_camera;
-                    c_down = true;
-                    return true;
+                    m_vgen.scale += delta * 0.01f;
+                    m_vgen.GenerateVolume();
                 }
-            }
-            else 
-                c_down = false;
+                else if (keyboard[Key.PageDown])
+                {
+                    m_vgen.scale -= delta * 0.01f;
+                    m_vgen.GenerateVolume();
+                }
 
+                if (keyboard[OpenTK.Input.Key.C])
+                {
+                    if (!c_down)
+                    {
+                        use_camera = !use_camera;
+                        c_down = true;
+                        return true;
+                    }
+                }
+                else
+                    c_down = false;
+            }
             return false;
         }
 
-        private void ProcessMouse()
+
+        private bool m_hasFocus = false;
+        private MouseState previous, current;
+        private float yaw = 0;
+        private float pitch = 0;
+        private float roll = 0;
+
+        private void SetMouseCenter()
         {
-            var mouse = OpenTK.Input.Mouse.GetState();
+            var mx = m_engine.GameWindow.Width / 2 + m_engine.GameWindow.X;
+            var my = m_engine.GameWindow.Height / 2 + m_engine.GameWindow.Y;
+            Mouse.SetPosition(mx, my);
+        }
+
+        private void ProcessMouse(float delta)
+        {
+            if (m_engine.GameWindow.Focused)
+            {
+                if (!m_hasFocus)
+                {
+                    SetMouseCenter();
+                    m_hasFocus = true;
+                    return;
+                }
+
+                current = OpenTK.Input.Mouse.GetState();
+                var dx = (previous.X - current.X) * 0.25f;
+                var dy = (previous.Y - current.Y) * 0.25f;
+
+                yaw += (dx * delta);
+                pitch += (dy * delta);
+
+                pitch = Utility.Clamp(pitch, 1.5f, -1.5f);
+                yaw = Utility.WrapAngle(yaw);
+                
+                var qyaw = Quaternion.FromAxisAngle(Vector3.UnitY, yaw);
+                var qpitch = Quaternion.FromAxisAngle(Vector3.UnitX, pitch);
+
+                var p = Vector3.Transform(-Vector3.UnitZ, qyaw * qpitch);
+                p.Normalize();
+
+                m_camera.Direction = p;
+
+                //Console.WriteLine("{0}:{1} - {2}:{3} - {4}:{5}", previous.X, previous.Y, current.X, current.Y, dx, dy);
+
+                SetMouseCenter();
+
+                previous = current;
+                //Console.WriteLine("{0}:{1}:{2}", yaw, pitch, roll);
+
+            }
+            else
+            {
+                m_hasFocus = false;
+            }
         }
     }
 

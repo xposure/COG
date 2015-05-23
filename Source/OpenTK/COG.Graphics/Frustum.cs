@@ -288,6 +288,7 @@ namespace COG.Graphics
         /// </summary>
         protected Plane[] _planes = new Plane[6];
 
+        
         /// <summary>
         ///     Stored versions of parent orientation.
         /// </summary>

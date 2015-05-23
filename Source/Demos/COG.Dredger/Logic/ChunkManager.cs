@@ -24,13 +24,14 @@ namespace COG.Dredger.Logic
         public const int CHUNK_SIZE = CHUNK_HALFSIZE + CHUNK_HALFSIZE; //MAX 64
         public const int MAP_DEPTH = 32; //MAX 256;
 
-        private Volume[,] chunks = new Volume[GRID_SIZE, GRID_SIZE];
+        private Volume[,] chunks;
 
         private Volume hover;
         private int sealevel = 8;
 
         public void Initialize()
         {
+            chunks = new Volume[GRID_SIZE, GRID_SIZE];
             hover = SurfaceExtractor.makeVoxels(0, 0, 0,
                    new int[] { 0, 0, 0 },
                    new int[] { 1, 1, 1 },
@@ -88,29 +89,32 @@ namespace COG.Dredger.Logic
 
         public void RenderOpaque(Program program)
         {
-            for (var x = 0; x < GRID_SIZE; ++x)
-                for (var y = 0; y < GRID_SIZE; ++y)
-                    chunks[x, y].RenderOpaque(program);
+            if (chunks != null)
+                for (var x = 0; x < GRID_SIZE; ++x)
+                    for (var y = 0; y < GRID_SIZE; ++y)
+                        chunks[x, y].RenderOpaque(program);
         }
 
         public void renderAlpha(Program program)
         {
-            for (var x = 0; x < GRID_SIZE; ++x)
-                for (var y = 0; y < GRID_SIZE; ++y)
-                    chunks[x, y].RenderAlpha(program);
+            if (chunks != null)
+                for (var x = 0; x < GRID_SIZE; ++x)
+                    for (var y = 0; y < GRID_SIZE; ++y)
+                        chunks[x, y].RenderAlpha(program);
 
         }
 
         protected override void DisposeManaged()
         {
             base.DisposeManaged();
-            
+
             if (hover)
                 hover.Dispose();
 
-            for (var x = 0; x < GRID_SIZE; ++x)
-                for (var y = 0; y < GRID_SIZE; ++y)
-                    chunks[x, y].Dispose();
+            if (chunks != null)
+                for (var x = 0; x < GRID_SIZE; ++x)
+                    for (var y = 0; y < GRID_SIZE; ++y)
+                        chunks[x, y].Dispose();
 
             chunks = null;
         }

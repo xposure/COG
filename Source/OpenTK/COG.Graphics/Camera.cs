@@ -108,24 +108,33 @@ namespace COG.Graphics
             var keyboard = OpenTK.Input.Keyboard.GetState();
 
             var move = Vector3.Zero;
-            if (keyboard[Key.A]) move -= new Vector3(Direction.Z, Direction.Y, Direction.X);
-            if (keyboard[Key.D]) move += new Vector3(Direction.Z, Direction.Y, Direction.X);
-            if (keyboard[Key.W]) move -= Direction;
-            if (keyboard[Key.S]) move += Direction;
+            if (keyboard[Key.A]) move -= new Vector3(-Direction.Z, 0, Direction.X);
+            if (keyboard[Key.D]) move += new Vector3(-Direction.Z, 0, Direction.X);
+            if (keyboard[Key.W]) move += Direction;
+            if (keyboard[Key.S]) move -= Direction;
+            if (keyboard[Key.Space]) move += new Vector3(0, 1, 0);
+            if (keyboard[Key.Z]) move += new Vector3(0, -1, 0);
 
-            //var o = (float)Math.Atan2(Direction.Z, Direction.X);
-            //var q = Quaternion.FromAxisAngle(Vector3.UnitY, o);
-            
-            //move = Vector3.Transform(move, q);
-            Position += move;
+            if (move.LengthSquared > 0)
+            {
+                move.Normalize();
+                move *= 20;
+
+                if (keyboard[Key.ShiftLeft]) move *= 2;
+                //var o = (float)Math.Atan2(Direction.Z, Direction.X);
+                //var q = Quaternion.FromAxisAngle(Vector3.UnitY, o);
+
+                //move = Vector3.Transform(move, q);
+                Position += move * delta;
 
 
-            //if (keyboard[Key.Space]) move.Y += 1;
+                //if (keyboard[Key.Space]) move.Y += 1;
 
-
+                Console.WriteLine("{0} - {1}", Direction, move);
+            }
         }
 
-        private void ProcessMouse()
+        private void ProcessMouse(float delta)
         {
             var mouse = OpenTK.Input.Mouse.GetState();
         }

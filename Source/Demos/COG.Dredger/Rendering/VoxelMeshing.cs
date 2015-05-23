@@ -124,11 +124,17 @@ namespace COG.Dredger.Rendering
 
         public void RenderOpaque(Program program)
         {
-            var p = new Vector3(X, 0, Z);
-            var m = Matrix4.CreateTranslation(p) * Matrix4.CreateScale(1f);
+            for (var i = 0; i < 8; i++)
+                for (var j = 0; j < 8; j++)
+                    for (var k = 0; k < 8; k++)
+            {
+                var p = new Vector3(X, 0, Z);
+                var m = Matrix4.CreateTranslation(p + new Vector3((i+k) * 16, k * 16, (j+k) * -16)) * Matrix4.CreateScale(0.1f);
 
-            program.SetUniformMatrix4("model", m);
-            opaqueMesh.Render(program);
+                program.SetUniformMatrix4("model", m);
+                opaqueMesh.Render(program);
+
+            }
         }
 
         public void RenderAlpha(Program program)
@@ -1368,7 +1374,11 @@ namespace COG.Dredger.Rendering
 
                         if (off == 0 && j == height - 1)
                         {
-                            return Color.Green.ToRGB();
+                            if (noiseyColor && Random.Range(0f, 1f) < 0.1f)
+                            {
+                                return (Color.FromRGBA(0x6c, 0xc1, 0x04, 1) * Random.Range(0.9f, 1.1f)).ToRGB();
+                            }
+                            return 0x6CC104;
                         }
                         else if (off == 1)
                         {
@@ -1387,7 +1397,7 @@ namespace COG.Dredger.Rendering
                                 {
                                     if (noiseyColor && Random.Range(0f, 1f) < 0.1f)
                                     {
-                                        return (Color.FromRGBA(0xA1, 0x78, 0x3a, 1) * Random.Range(0.9f, 1f)).ToRGB();
+                                        return (Color.FromRGBA(0xA1, 0x78, 0x3a, 1) * Random.Range(0.9f, 1.1f)).ToRGB();
                                     }
 
                                     return 0xAE9165;
@@ -1403,8 +1413,12 @@ namespace COG.Dredger.Rendering
 
                             return 0;
                         }
-
-                        return Color.Brown.ToRGB();
+                        if (noiseyColor && Random.Range(0f, 1f) < 0.1f)
+                        {
+                            return (Color.FromRGBA(0xA1, 0x78, 0x3a, 1) * Random.Range(0.9f, 1f)).ToRGB();
+                        }
+                        return 0xAE9165;
+                        //return Color.Brown.ToRGB();
                     });
                     break;
             }
