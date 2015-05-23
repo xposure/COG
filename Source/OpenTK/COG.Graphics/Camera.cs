@@ -130,7 +130,7 @@ namespace COG.Graphics
 
                 //if (keyboard[Key.Space]) move.Y += 1;
 
-                Console.WriteLine("{0} - {1}", Direction, move);
+                //Console.WriteLine("{0} - {1}", Direction, move);
             }
         }
 

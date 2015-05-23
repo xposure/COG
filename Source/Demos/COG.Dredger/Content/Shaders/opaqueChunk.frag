@@ -7,14 +7,6 @@ in vec3 WP;
 
 out vec4 color;
  
- vec4 checker3D(vec3 texc, vec4 color0, vec4 color1)
-{
-  if ((int(floor(texc.x) + floor(texc.y) + floor(texc.z)) & 1) == 0)
-    return color0;
-  else
-    return color1;
-}
-
 float edgeDarken(float p){
 	const float edgeThickness = 0.1f;
 	const float inverseEdgeThickness = 1f - edgeThickness;
@@ -47,6 +39,7 @@ void main(){
 	float aoAmount = aoDarken(UV.x);
 	color.rgb = COLOR.rgb * aoAmount;
 	
+
 	float edgeAmount = edgeDarken(WP.x) +
 						edgeDarken(WP.y) +
 						edgeDarken(WP.z);

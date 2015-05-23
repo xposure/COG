@@ -22,19 +22,42 @@ namespace COG.Dredger.Rendering
         public int this[int index] { get { return size[index]; } }
     }
 
+    public class VolumeSide : DisposableObject
+    {
+        public List<Vector3> vertices = new List<Vector3>(65536);
+        public List<int> faces = new List<int>(65536);
+        public List<Vector2> uvs = new List<Vector2>(65536);
+        //public static List<Vector3> normals = new List<Vector3>(65536);
+        public List<Color> colors = new List<Color>(65536);
+
+        public DynamicMesh opaqueMesh = new DynamicMesh(VertexPositionTextureColor.VertexDeclaration);
+
+        protected override void DisposedUnmanaged()
+        {
+            base.DisposedUnmanaged();
+
+            opaqueMesh.Dispose();
+        }
+    }
+
     public class Volume : DisposableObject
     {
-        public DynamicMesh opaqueMesh;
+        public VolumeSide[] sides = new VolumeSide[6];
+        //public DynamicMesh opaqueMesh;
         public DynamicMesh waterMesh;
         public Dimensions dims;
         public int X, Y, Z;
+
 
         protected override void DisposeManaged()
         {
             base.DisposeManaged();
 
-            if (opaqueMesh)
-                opaqueMesh.Dispose();
+            foreach (var side in sides)
+                side.Dispose();
+
+            //if (opaqueMesh)
+            //    opaqueMesh.Dispose();
 
             if (waterMesh)
                 waterMesh.Dispose();
@@ -49,6 +72,9 @@ namespace COG.Dredger.Rendering
             Z = z;
             this.data = data;
             this.dims = dims;
+
+            for (var i = 0; i < sides.Length; i++)
+                sides[i] = new VolumeSide();
         }
 
         public uint this[int index]
@@ -87,11 +113,16 @@ namespace COG.Dredger.Rendering
 
         public void PrepareMesh()
         {
-            if (opaqueMesh == null)
-            {
-                opaqueMesh = new DynamicMesh(VertexPositionTextureColor.VertexDeclaration);
-                //opaqueMesh = new DynamicMesh(VertexPositionColor.VertexDeclaration);
-            }
+            //foreach(var side in sides)
+            //{
+            //    if(!side.opaqueMesh)
+            //        side.opaqueMesh
+            //}
+            //if (opaqueMesh == null)
+            //{
+            //    opaqueMesh = new DynamicMesh(VertexPositionTextureColor.VertexDeclaration);
+            //    //opaqueMesh = new DynamicMesh(VertexPositionColor.VertexDeclaration);
+            //}
             //else
             //{
             //    opaqueMesh.Clear();
@@ -108,11 +139,11 @@ namespace COG.Dredger.Rendering
             //}
         }
 
-        public void UpdateMesh()
+        public void UpdateMesh(Volume other)
         {
             this.PrepareMesh();
-            SurfaceExtractor.GenerateMesh(this);
-            SurfaceExtractor.GenerateWaterMesh(this);
+            SurfaceExtractor.GenerateChunk(this, other, new Vector3(0, 0, 0));
+            //SurfaceExtractor.GenerateWaterMesh(this);
 
             //opaqueMesh.RecalculateNormals();
             //waterMesh.RecalculateNormals();
@@ -124,17 +155,25 @@ namespace COG.Dredger.Rendering
 
         public void RenderOpaque(Program program)
         {
-            for (var i = 0; i < 8; i++)
-                for (var j = 0; j < 8; j++)
-                    for (var k = 0; k < 8; k++)
-            {
-                var p = new Vector3(X, 0, Z);
-                var m = Matrix4.CreateTranslation(p + new Vector3((i+k) * 16, k * 16, (j+k) * -16)) * Matrix4.CreateScale(0.1f);
+            //for (var i = 0; i < 8; i++)
+            //    for (var j = 0; j < 8; j++)
+            //        for (var k = 0; k < 8; k++)
+            //        {
+            //            var p = new Vector3(X, 0, Z);
+            //            var m = Matrix4.CreateTranslation(p + new Vector3((i + k) * 16, k * 16, (j + k) * -16)) * Matrix4.CreateScale(1f / 16f);
 
-                program.SetUniformMatrix4("model", m);
-                opaqueMesh.Render(program);
+            //            program.SetUniformMatrix4("model", m);
+            //            opaqueMesh.Render(program);
 
-            }
+            //        }
+
+            var p = new Vector3(X, Y, Z);
+            var m = Matrix4.CreateTranslation(p) * Matrix4.CreateScale(1f);
+
+            program.SetUniformMatrix4("model", m);
+            foreach (var side in sides)
+                side.opaqueMesh.Render(program);
+            //opaqueMesh.Render(program);
         }
 
         public void RenderAlpha(Program program)
@@ -154,7 +193,7 @@ namespace COG.Dredger.Rendering
         public static List<Vector3> vertices = new List<Vector3>(65536);
         public static List<int> faces = new List<int>(65536);
         public static List<Vector2> uvs = new List<Vector2>(65536);
-        public static List<Vector3> normals = new List<Vector3>(65536);
+        //public static List<Vector3> normals = new List<Vector3>(65536);
         public static List<Color> colors = new List<Color>(65536);
 
         public static Volume makeVoxels(int x, int y, int z, int[] l, int[] h, Func<int, int, int, uint> f)
@@ -252,13 +291,377 @@ namespace COG.Dredger.Rendering
             return output / (precision - 1);
         }
 
+        public static int GenerateChunk(Volume volume, Volume other, Vector3 offset, bool centered = false, bool disableAO = false, bool hasNeighbors = false, float scale = 1f)
+        {
+            foreach (var side in volume.sides)
+            {
+                side.colors.Clear();
+                side.faces.Clear();
+                side.uvs.Clear();
+                side.vertices.Clear();
+            }
+            //vertices.Clear();
+            //faces.Clear();
+            //uvs.Clear();
+            ////normals.Clear();
+            //colors.Clear();
+            var dims = volume.dims;
+            //var neighborOffset = hasNeighbors ? 1 : 0;
+
+            var f = new Func<int, int, int, uint>((i, j, k) =>
+            {
+                if (i < 0 || j < 0 || k < 0 || i >= dims[0] || j >= dims[1] || k >= dims[2])
+                    return 0;
+
+                var r = volume[i + dims[0] * (j + dims[1] * k)];
+                if (r > 0 && (r & 0x1000000u) > 0u)
+                {
+                    r = 0;
+                }
+                //1 + dims[0] * (1 + dims[1] * 1)
+                //i    w    j   h    k
+                //1 + 16 * (1 + 16 * 1)
+                return r;
+                //return 0;
+            });
+
+            //Sweep over 3-axes
+
+            for (var d = 0; d < 3; ++d)
+            {
+                int i, j, k, l, w, h
+                  , u = (d + 1) % 3
+                  , v = (d + 2) % 3;
+                int[] x = { 0, 0, 0 };
+                int[] q = { 0, 0, 0 };
+                int[,] posArea = { { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 } };
+                int[,] negArea = { { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 } };
+
+                if (mask.Length < dims[u] * dims[v])
+                {
+                    mask = new uint[dims[u] * dims[v]];
+                    maskLayout = new MaskLayout[dims[u] * dims[v]];
+                }
+                q[d] = 1;
+
+                posArea[0, u] = -1;
+                posArea[1, v] = -1;
+                posArea[2, u] = 1;
+                posArea[3, v] = 1;
+
+                negArea[0, v] = -1;
+                negArea[1, u] = -1;
+                negArea[2, v] = 1;
+                negArea[3, u] = 1;
+
+                for (x[d] = -1; x[d] < dims[d]; )
+                {
+                    Console.WriteLine();
+                    //Compute mask
+                    //TODO: Test if the AOMASK should be created outside of the block mask
+                    //the aomask generation might be causing a cache miss per loop
+                    var n = 0;
+                    for (x[v] = 0; x[v] < dims[v]; ++x[v])
+                    {
+                        for (x[u] = 0; x[u] < dims[u]; ++x[u], ++n)
+                        {
+                            //int a = 0;
+                            //if (x[d] < 0 && cm != null)
+                            //    a = cm.GetBlock(volume.X + x[0], volume.Y + x[1], volume.Z + x[2]);
+                            //else
+                            var a = (0u <= x[d] ? f(x[0], x[1], x[2]) : 0u);
+                            var b = (x[d] < dims[d] - 1 ? f(x[0] + q[0], x[1] + q[1], x[2] + q[2]) : 0u);
+
+                            maskLayout[n].data = 0u;
+                            if ((a != 0) == (b != 0))
+                            {
+                                mask[n] = 0;
+                            }
+                            else if (a != 0)
+                            {
+                                mask[n] = a;
+                            }
+                            else
+                            {
+                                maskLayout[n].BackFace = true;
+                                mask[n] = b;
+                            }
+
+                            if (disableAO || mask[n] == 0)
+                            {
+                                //maskLayout[n].data = 4095u;
+                            }
+                            else
+                            {
+                                uint side1 = 0, side2 = 0, corner = 0;
+                                var neighbors = new uint[4];
+
+                                for (var t = 0; t < 4; ++t)
+                                {
+                                    var tt = (t + 1) % 4;
+
+                                    if (a != 0)
+                                    {
+                                        side1 = ((x[d] < dims[d] - 1 ? f(x[0] + q[0] + posArea[t, 0], x[1] + q[1] + posArea[t, 1], x[2] + q[2] + posArea[t, 2]) : 0u) > 0u ? 1u : 0u);
+                                        side2 = ((x[d] < dims[d] - 1 ? f(x[0] + q[0] + posArea[tt, 0], x[1] + q[1] + posArea[tt, 1], x[2] + q[2] + posArea[tt, 2]) : 0u) > 0u ? 1u : 0u);
+                                    }
+                                    else
+                                    {
+                                        side1 = ((x[d] < dims[d] - 1 ? f(x[0] + negArea[t, 0], x[1] + negArea[t, 1], x[2] + negArea[t, 2]) : 0u) > 0u ? 1u : 0u);
+                                        side2 = ((x[d] < dims[d] - 1 ? f(x[0] + negArea[tt, 0], x[1] + negArea[tt, 1], x[2] + negArea[tt, 2]) : 0u) > 0u ? 1u : 0u);
+                                    }
+
+                                    if (side1 > 0 && side2 > 0)
+                                    {
+                                        neighbors[t] = 0;
+                                    }
+                                    else
+                                    {
+                                        if (a != 0)
+                                        {
+                                            corner = ((x[d] < dims[d] - 1u ? f(x[0] + q[0] + posArea[t, 0] + posArea[tt, 0], x[1] + q[1] + posArea[t, 1] + posArea[tt, 1], x[2] + q[2] + posArea[t, 2] + posArea[tt, 2]) : 0u) > 0u ? 1u : 0u);
+                                        }
+                                        else
+                                        {
+                                            corner = ((x[d] < dims[d] - 1u ? f(x[0] + negArea[t, 0] + negArea[tt, 0], x[1] + negArea[t, 1] + negArea[tt, 1], x[2] + negArea[t, 2] + negArea[tt, 2]) : 0u) > 0u ? 1u : 0u);
+                                        }
+                                        neighbors[t] = 3u - (side1 + side2 + corner);
+                                    }
+
+                                    maskLayout[n].SetOcclusion(t, neighbors[t]);
+                                }
+
+                                uint a00 = neighbors[0], a01 = neighbors[1], a11 = neighbors[2], a10 = neighbors[3];
+                                if (a00 + a11 == a10 + a01)
+                                    maskLayout[n].FlipFace = Math.Max(a00, a11) < Math.Max(a10, a01);
+                                else if (a00 + a11 < a10 + a01)
+                                    maskLayout[n].FlipFace = true;
+
+
+                            }
+                        }
+                    }
+                    //Increment x[d]
+                    ++x[d];
+                    //Generate mesh for mask using lexicographic ordering
+                    n = 0;
+                    for (j = 0; j < dims[v]; ++j)
+                    {
+                        for (i = 0; i < dims[u]; )
+                        {
+                            var c = mask[n];
+                            if (c != 0)
+                            {
+                                var a = maskLayout[n];
+                                //if (hasNeighbors && (j == 0 || i == 0 || j == dims[v] - 1 || i == dims[u] - 1))
+                                //{
+                                //    mask[n] = 0;
+                                //    maskLayout[n].data = 4095u;
+                                //    ++i; ++n;
+
+                                //    continue;
+                                //}
+                                //else
+
+                                w = 1;
+                                h = 1;
+
+
+                                //Add quad
+                                x[u] = i; x[v] = j;
+                                int[] du = { 0, 0, 0 };
+                                int[] dv = { 0, 0, 0 };
+
+                                VolumeSide s;
+                                VolumeSide o;
+                                var UGH = 0;
+                                if (!maskLayout[n].BackFace)
+                                {
+                                    dv[v] = h;
+                                    du[u] = w;
+                                    s = volume.sides[d];
+                                    o = other.sides[d];
+                                    UGH = d;
+                                }
+                                else
+                                {
+                                    du[v] = h;
+                                    dv[u] = w;
+                                    s = volume.sides[d + 3];
+                                    o = other.sides[d + 3];
+                                    UGH = d + 3;
+                                }
+
+                                //if (d < 3)
+                                {
+                                    var vertex_count = s.vertices.Count;
+
+                                    var pp = Vector3.Zero;
+                                    pp[v] = i * 16f;
+                                    pp[u] = j * 16f;
+                                    Console.WriteLine(pp);
+                                    //Console.WriteLine(new Vector3(x[0] + du[0], x[1] + du[1], x[2] + du[2]));
+                                    //Console.WriteLine(new Vector3(x[0] + du[0] + dv[0], x[1] + du[1] + dv[1], x[2] + du[2] + dv[2]));
+                                    //Console.WriteLine(new Vector3(x[0] + dv[0], x[1] + dv[1], x[2] + dv[2]));
+                                    //Console.WriteLine(pp);
+                                    for (var fa = 0; fa < o.vertices.Count; fa++)
+                                    {
+                                        //s.vertices.Add(o.vertices[fa] + offset);
+                                        s.vertices.Add(o.vertices[fa] + pp);
+                                        s.uvs.Add(o.uvs[fa]);
+
+
+                                        s.colors.Add(o.colors[fa]);
+                                    }
+
+                                    for (var fa = 0; fa < o.faces.Count; fa++)
+                                    {
+                                        s.faces.Add(o.faces[fa] + vertex_count);
+                                        //s.faces.AddRange(new int[] { vertex_count, vertex_count + 1, vertex_count + 2, vertex_count, vertex_count + 2, vertex_count + 3 });
+                                    }
+                                }
+
+                                //var flip = maskLayout[n].FlipFace;
+
+                                //var cr = ((c >> 16) & 0xff) / 255f;
+                                //var cg = ((c >> 8) & 0xff) / 255f;
+                                //var cb = (c & 0xff) / 255f;
+
+                                //var aouvs = new float[4];
+                                //float[] AOcurve = new float[] { 0.0f, 0.6f, 0.8f, 1.0f };
+                                ////Color[] ugh = new Color[] { 
+                                ////        new Color(1,0,0,1),
+                                ////        new Color(0,1,0,1),
+                                ////        new Color(0,0,1,1),
+                                ////        new Color(1,1,1,1)
+                                ////    };
+                                //for (var o = 0; o < 4; ++o)
+                                //{
+                                //    //var ao = AOcurve[maskLayout[n].GetOcclusion(o)];
+                                //    var ao = disableAO ? 1f : (maskLayout[n].GetOcclusion(o) / 3f);
+                                //    ////var ao = disableAO ? 1f : (maskLayout[n].GetOcclusion(o) / 4f + 0.25f);
+                                //    ////if (maskLayout[n].GetOcclusion(o) != 3u)
+                                //    ////    ao = 0.5f;
+                                //    ////else
+                                //    ////    ao = 1f;
+                                //    //var color = new Color(cr * ao, cg * ao, cb * ao, 1);
+                                //    //colors.Add(color);
+                                //    ////colors.Add(new Color(1,0,1,1));
+
+                                //    s.colors.Add(new Color(cr, cg, cb));
+                                //    s.uvs.Add(new Vector2(ao, 0));
+                                //    //colors.Add(ugh[maskLayout[n].GetOcclusion(o)]);
+
+                                //    //aouvs[o] = ao;
+                                //}
+
+
+                                ////for (var o = 0; o < 4; ++o)
+                                ////{
+                                ////    uvs.Add(new Vector2(Pack(aouvs[0], aouvs[1]), Pack(aouvs[2], aouvs[3])));
+                                ////}
+
+                                ////var vertices = volume.sides[d];
+                                //var vertices = s.vertices;
+                                //var vertex_count = s.vertices.Count;
+                                //if (centered)
+                                //{
+                                //    //This vert generation code will make the 0,0,0 be the center of the mesh in worldspace
+                                //    s.vertices.Add(new Vector3(x[0], x[1], x[2]) - new Vector3(dims[0], dims[1], dims[2]) / 2f);
+                                //    s.vertices.Add(new Vector3(x[0] + du[0], x[1] + du[1], x[2] + du[2]) - new Vector3(dims[0], dims[1], dims[2]) / 2f);
+                                //    s.vertices.Add(new Vector3(x[0] + du[0] + dv[0], x[1] + du[1] + dv[1], x[2] + du[2] + dv[2]) - new Vector3(dims[0], dims[1], dims[2]) / 2f);
+                                //    s.vertices.Add(new Vector3(x[0] + dv[0], x[1] + dv[1], x[2] + dv[2]) - new Vector3(dims[0], dims[1], dims[2]) / 2f);
+                                //}
+                                //else
+                                //{
+                                //    ////This vert generation code will make the edge of the mesh at 0,0,0
+                                //    s.vertices.Add(new Vector3(x[0], x[1], x[2]));
+                                //    s.vertices.Add(new Vector3(x[0] + du[0], x[1] + du[1], x[2] + du[2]));
+                                //    s.vertices.Add(new Vector3(x[0] + du[0] + dv[0], x[1] + du[1] + dv[1], x[2] + du[2] + dv[2]));
+                                //    s.vertices.Add(new Vector3(x[0] + dv[0], x[1] + dv[1], x[2] + dv[2]));
+                                //}
+
+                                ////uvs.Add(new Vector2(0, 1));
+                                ////uvs.Add(new Vector2(1, 1));
+                                ////uvs.Add(new Vector2(1, 0));
+                                ////uvs.Add(new Vector2(0, 0));
+
+                                //if (flip)
+                                //    s.faces.AddRange(new int[] { vertex_count + 1, vertex_count + 2, vertex_count + 3, vertex_count + 1, vertex_count + 3, vertex_count });
+                                //else
+                                //    s.faces.AddRange(new int[] { vertex_count, vertex_count + 1, vertex_count + 2, vertex_count, vertex_count + 2, vertex_count + 3 });
+
+                                //Zero-out mask
+                                for (l = 0; l < h; ++l)
+                                {
+                                    for (k = 0; k < w; ++k)
+                                    {
+                                        mask[n + k + l * dims[u]] = 0;
+                                        maskLayout[n + k + l * dims[u]].data = 4095u;
+                                    }
+                                }
+                                //Increment counters and continue
+                                i += w; n += w;
+                            }
+                            else
+                            {
+                                ++i; ++n;
+                            }
+                        }
+                    }
+                }
+            }
+
+            //volume.opaqueMesh.vertices = vertices.ToArray();
+            //volume.opaqueMesh.colors = colors.ToArray();
+            //volume.opaqueMesh.triangles = faces.ToArray();
+            //volume.opaqueMesh.uv = uvs.ToArray();
+            //volume.opaqueMesh.RecalculateNormals();
+
+            volume.PrepareMesh();
+            foreach (var side0 in volume.sides)
+            {
+                var mesh = side0.opaqueMesh;
+                mesh.Begin();
+                for (var i = 0; i < side0.vertices.Count; i++)
+                {
+                    mesh.Position(side0.vertices[i]);
+                    mesh.TextureCoord(side0.uvs[i]);
+                    mesh.Color(side0.colors[i]);
+                }
+            }
+
+            var baseindex = 0;
+            foreach (var side0 in volume.sides)
+            {
+                var mesh = side0.opaqueMesh;
+                //var side0 = volume.sides[0];
+                for (var i = 0; i < side0.faces.Count; i++)
+                {
+                    mesh.Index((ushort)(side0.faces[i] + baseindex));
+                }
+                //baseindex += side0.vertices.Count;
+                mesh.End(BufferUsageHint.DynamicDraw);
+            }
+
+            Console.WriteLine("base: " + baseindex);
+            return baseindex;
+        }
+
         public static int GenerateMesh(Volume volume, bool centered = false, bool disableGreedyMeshing = false, bool disableAO = false, bool hasNeighbors = false, float scale = 1f)
         {
-            vertices.Clear();
-            faces.Clear();
-            uvs.Clear();
-            normals.Clear();
-            colors.Clear();
+            foreach (var side in volume.sides)
+            {
+                side.colors.Clear();
+                side.faces.Clear();
+                side.uvs.Clear();
+                side.vertices.Clear();
+            }
+            //vertices.Clear();
+            //faces.Clear();
+            //uvs.Clear();
+            ////normals.Clear();
+            //colors.Clear();
             var dims = volume.dims;
             var neighborOffset = hasNeighbors ? 1 : 0;
 
@@ -450,15 +853,19 @@ namespace COG.Dredger.Rendering
                                 int[] du = { 0, 0, 0 };
                                 int[] dv = { 0, 0, 0 };
 
+                                VolumeSide s;
+
                                 if (!maskLayout[n].BackFace)
                                 {
                                     dv[v] = h;
                                     du[u] = w;
+                                    s = volume.sides[d];
                                 }
                                 else
                                 {
                                     du[v] = h;
                                     dv[u] = w;
+                                    s = volume.sides[d + 3];
                                 }
 
                                 var flip = maskLayout[n].FlipFace;
@@ -469,12 +876,12 @@ namespace COG.Dredger.Rendering
 
                                 var aouvs = new float[4];
                                 float[] AOcurve = new float[] { 0.0f, 0.6f, 0.8f, 1.0f };
-                                Color[] ugh = new Color[] { 
-                                new Color(1,0,0,1),
-                                new Color(0,1,0,1),
-                                new Color(0,0,1,1),
-                                new Color(1,1,1,1)
-                            };
+                                //Color[] ugh = new Color[] { 
+                                //        new Color(1,0,0,1),
+                                //        new Color(0,1,0,1),
+                                //        new Color(0,0,1,1),
+                                //        new Color(1,1,1,1)
+                                //    };
                                 for (var o = 0; o < 4; ++o)
                                 {
                                     //var ao = AOcurve[maskLayout[n].GetOcclusion(o)];
@@ -488,8 +895,8 @@ namespace COG.Dredger.Rendering
                                     //colors.Add(color);
                                     ////colors.Add(new Color(1,0,1,1));
 
-                                    colors.Add(new Color(cr, cg, cb));
-                                    uvs.Add(new Vector2(ao, 0));
+                                    s.colors.Add(new Color(cr, cg, cb));
+                                    s.uvs.Add(new Vector2(ao, 0));
                                     //colors.Add(ugh[maskLayout[n].GetOcclusion(o)]);
 
                                     //aouvs[o] = ao;
@@ -501,22 +908,24 @@ namespace COG.Dredger.Rendering
                                 //    uvs.Add(new Vector2(Pack(aouvs[0], aouvs[1]), Pack(aouvs[2], aouvs[3])));
                                 //}
 
-                                var vertex_count = vertices.Count;
+                                //var vertices = volume.sides[d];
+                                var vertices = s.vertices;
+                                var vertex_count = s.vertices.Count;
                                 if (centered)
                                 {
                                     //This vert generation code will make the 0,0,0 be the center of the mesh in worldspace
-                                    vertices.Add(new Vector3(x[0], x[1], x[2]) - new Vector3(dims[0], dims[1], dims[2]) / 2f);
-                                    vertices.Add(new Vector3(x[0] + du[0], x[1] + du[1], x[2] + du[2]) - new Vector3(dims[0], dims[1], dims[2]) / 2f);
-                                    vertices.Add(new Vector3(x[0] + du[0] + dv[0], x[1] + du[1] + dv[1], x[2] + du[2] + dv[2]) - new Vector3(dims[0], dims[1], dims[2]) / 2f);
-                                    vertices.Add(new Vector3(x[0] + dv[0], x[1] + dv[1], x[2] + dv[2]) - new Vector3(dims[0], dims[1], dims[2]) / 2f);
+                                    s.vertices.Add(new Vector3(x[0], x[1], x[2]) - new Vector3(dims[0], dims[1], dims[2]) / 2f);
+                                    s.vertices.Add(new Vector3(x[0] + du[0], x[1] + du[1], x[2] + du[2]) - new Vector3(dims[0], dims[1], dims[2]) / 2f);
+                                    s.vertices.Add(new Vector3(x[0] + du[0] + dv[0], x[1] + du[1] + dv[1], x[2] + du[2] + dv[2]) - new Vector3(dims[0], dims[1], dims[2]) / 2f);
+                                    s.vertices.Add(new Vector3(x[0] + dv[0], x[1] + dv[1], x[2] + dv[2]) - new Vector3(dims[0], dims[1], dims[2]) / 2f);
                                 }
                                 else
                                 {
                                     ////This vert generation code will make the edge of the mesh at 0,0,0
-                                    vertices.Add(new Vector3(x[0], x[1], x[2]));
-                                    vertices.Add(new Vector3(x[0] + du[0], x[1] + du[1], x[2] + du[2]));
-                                    vertices.Add(new Vector3(x[0] + du[0] + dv[0], x[1] + du[1] + dv[1], x[2] + du[2] + dv[2]));
-                                    vertices.Add(new Vector3(x[0] + dv[0], x[1] + dv[1], x[2] + dv[2]));
+                                    s.vertices.Add(new Vector3(x[0], x[1], x[2]));
+                                    s.vertices.Add(new Vector3(x[0] + du[0], x[1] + du[1], x[2] + du[2]));
+                                    s.vertices.Add(new Vector3(x[0] + du[0] + dv[0], x[1] + du[1] + dv[1], x[2] + du[2] + dv[2]));
+                                    s.vertices.Add(new Vector3(x[0] + dv[0], x[1] + dv[1], x[2] + dv[2]));
                                 }
 
                                 //uvs.Add(new Vector2(0, 1));
@@ -525,9 +934,9 @@ namespace COG.Dredger.Rendering
                                 //uvs.Add(new Vector2(0, 0));
 
                                 if (flip)
-                                    faces.AddRange(new int[] { vertex_count + 1, vertex_count + 2, vertex_count + 3, vertex_count + 1, vertex_count + 3, vertex_count });
+                                    s.faces.AddRange(new int[] { vertex_count + 1, vertex_count + 2, vertex_count + 3, vertex_count + 1, vertex_count + 3, vertex_count });
                                 else
-                                    faces.AddRange(new int[] { vertex_count, vertex_count + 1, vertex_count + 2, vertex_count, vertex_count + 2, vertex_count + 3 });
+                                    s.faces.AddRange(new int[] { vertex_count, vertex_count + 1, vertex_count + 2, vertex_count, vertex_count + 2, vertex_count + 3 });
 
                                 //Zero-out mask
                                 for (l = 0; l < h; ++l)
@@ -557,22 +966,33 @@ namespace COG.Dredger.Rendering
             //volume.opaqueMesh.RecalculateNormals();
 
             volume.PrepareMesh();
-            var mesh = volume.opaqueMesh;
-            mesh.Begin();
-            for (var i = 0; i < vertices.Count; i++)
+            foreach (var side0 in volume.sides)
             {
-                mesh.Position(vertices[i] * scale);
-                mesh.TextureCoord(uvs[i]);
-                mesh.Color(colors[i]);
+                var mesh = side0.opaqueMesh;
+                mesh.Begin();
+                for (var i = 0; i < side0.vertices.Count; i++)
+                {
+                    mesh.Position(side0.vertices[i]);
+                    mesh.TextureCoord(side0.uvs[i]);
+                    mesh.Color(side0.colors[i]);
+                }
             }
 
-            for (var i = 0; i < faces.Count; i++)
+            var baseindex = 0;
+            foreach (var side0 in volume.sides)
             {
-                mesh.Index((ushort)faces[i]);
+                var mesh = side0.opaqueMesh;
+                //var side0 = volume.sides[0];
+                for (var i = 0; i < side0.faces.Count; i++)
+                {
+                    mesh.Index((ushort)(side0.faces[i] + baseindex));
+                }
+                //baseindex += side0.vertices.Count;
+                mesh.End(BufferUsageHint.DynamicDraw);
             }
-            mesh.End(BufferUsageHint.DynamicDraw);
+            ;
 
-            return vertices.Count;
+            return baseindex;
         }
 
         public static int GenerateWaterMesh(Volume volume, bool centered = false, bool disableGreedyMeshing = false, float scale = 1f)
@@ -580,7 +1000,7 @@ namespace COG.Dredger.Rendering
             vertices.Clear();
             faces.Clear();
             uvs.Clear();
-            normals.Clear();
+            //normals.Clear();
             colors.Clear();
 
             var dims = volume.dims;
@@ -785,7 +1205,7 @@ namespace COG.Dredger.Rendering
             vertices.Clear();
             faces.Clear();
             uvs.Clear();
-            normals.Clear();
+            //normals.Clear();
             colors.Clear();
 
             var dims = volume.dims;
@@ -1079,7 +1499,7 @@ namespace COG.Dredger.Rendering
             vertices.Clear();
             faces.Clear();
             uvs.Clear();
-            normals.Clear();
+            //normals.Clear();
             colors.Clear();
 
             var dims = volume.dims;

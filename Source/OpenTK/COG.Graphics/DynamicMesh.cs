@@ -93,6 +93,9 @@ namespace COG.Graphics
                 }
                 else
                 {
+                    if (m_indexPos > 65536)
+                        throw new Exception("Only support ushort for index");
+
                     GL.BindBuffer(BufferTarget.ElementArrayBuffer, m_ibufferID);
                     GL.DrawElements(PrimitiveType.Triangles, m_indexPos, DrawElementsType.UnsignedShort, IntPtr.Zero);
                     GL.BindBuffer(BufferTarget.ElementArrayBuffer, 0);

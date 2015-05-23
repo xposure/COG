@@ -164,9 +164,7 @@ namespace COG.Dredger.States
             m_spriteProgram = m_engine.Assets.LoadProgram("dredger:program:sprite");
             m_font = m_engine.Assets.LoadFont("dredger:font:arial");
 
-            m_chunks = new ChunkManager();
-            //m_chunks.Initialize();
-
+        
             vertexArrayID = GL.GenVertexArray();
             GL.BindVertexArray(vertexArrayID);
 
@@ -183,6 +181,10 @@ namespace COG.Dredger.States
             m_vgen.depth = 16;
             m_vgen.scale = 0.45f;
             m_volume = m_vgen.GenerateVolume();
+
+            m_chunks = new ChunkManager();
+            m_chunks.Initialize(m_volume);
+
 
             GenerateCube();
 
@@ -365,9 +367,9 @@ namespace COG.Dredger.States
 
 
             //m_mesh.Render(m_program);
-            m_volume.RenderOpaque(m_opaqueChunkProgram);
-            m_volume.RenderAlpha(m_opaqueChunkProgram);
-            //m_chunks.RenderOpaque(m_opaqueChunkProgram);
+            //m_volume.RenderOpaque(m_opaqueChunkProgram);
+            //m_volume.RenderAlpha(m_opaqueChunkProgram);
+            m_chunks.RenderOpaque(m_opaqueChunkProgram);
 
 
             GL.DepthMask(false);
@@ -433,7 +435,6 @@ namespace COG.Dredger.States
         private MouseState previous, current;
         private float yaw = 0;
         private float pitch = 0;
-        private float roll = 0;
 
         private void SetMouseCenter()
         {

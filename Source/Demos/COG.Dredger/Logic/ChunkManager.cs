@@ -19,17 +19,17 @@ namespace COG.Dredger.Logic
         public float offset = 0f;
         public bool wireframe = false;
 
-        public const int GRID_SIZE = 16; // MAX 64
-        public const int CHUNK_HALFSIZE = 8;
+        public const int GRID_SIZE = 1; // MAX 64
+        public const int CHUNK_HALFSIZE = 1;
         public const int CHUNK_SIZE = CHUNK_HALFSIZE + CHUNK_HALFSIZE; //MAX 64
-        public const int MAP_DEPTH = 32; //MAX 256;
+        public const int MAP_DEPTH = 1; //MAX 256;
 
         private Volume[,] chunks;
 
         private Volume hover;
         private int sealevel = 8;
 
-        public void Initialize()
+        public void Initialize(Volume other)
         {
             chunks = new Volume[GRID_SIZE, GRID_SIZE];
             hover = SurfaceExtractor.makeVoxels(0, 0, 0,
@@ -64,7 +64,7 @@ namespace COG.Dredger.Logic
             {
                 for (var y = 0; y < GRID_SIZE; ++y)
                 {
-                    chunks[x, y].UpdateMesh();
+                    chunks[x, y].UpdateMesh(other);
                     //{
 
                     //    var r = Instantiate(opaque, new Vector3(chunks[x, y].X, chunks[x, y].Y, chunks[x, y].Z), Quaternion.identity);
