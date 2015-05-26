@@ -8,6 +8,10 @@ namespace COG.Dredger
 {
     public class Config : Registry
     {
+        public const int MAP_COLUMN_SIZE = 16;
+        public const int MAP_COLUMN_SIZE_SQR = MAP_COLUMN_SIZE * MAP_COLUMN_SIZE;
+        public const int MAP_COLUMN_HEIGHT = 128;
+
         private Module m_module;
         private int m_windowWidth = 1024, m_windowHeight = 768;
 
