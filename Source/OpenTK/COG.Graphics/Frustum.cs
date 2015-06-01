@@ -288,7 +288,7 @@ namespace COG.Graphics
         /// </summary>
         protected Plane[] _planes = new Plane[6];
 
-        
+
         /// <summary>
         ///     Stored versions of parent orientation.
         /// </summary>
@@ -324,6 +324,31 @@ namespace COG.Graphics
                 _position = value;
             }
 
+        }
+
+
+        public Ray3 CameraToRay(Vector3 p)
+        {
+
+            var start = new Vector4(0, 0, -1, 1);
+            var end = new Vector4(0, 0, 1, 1);
+
+            var invProjection = ProjectionMatrix.Inverted();
+            var invView = ViewMatrix.Inverted();
+
+            var startCamera = Vector4.Transform(start, invProjection);
+            startCamera /= startCamera.W;
+
+            var startWorld = Vector4.Transform(startCamera, invView);
+            startWorld /= startWorld.W;
+
+            var endCamera = Vector4.Transform(end, invProjection);
+            endCamera /= endCamera.W;
+
+            var endWorld = Vector4.Transform(endCamera, invView);
+            endWorld /= endWorld.W;
+
+            return new Ray3(Position, (endWorld - startWorld).Xyz.Normalized());
         }
 
         //#region ProjectionMatrixRS Property

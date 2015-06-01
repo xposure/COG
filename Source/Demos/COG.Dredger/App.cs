@@ -106,7 +106,18 @@ namespace COG.Dredger
         [STAThread]
         static void Main(string[] args)
         {
-            Time(10);
+            foreach (var p in GridRayTracer.raytrace(5, 5, 5, 0, 0, 0))
+            {
+                Console.WriteLine(p);
+            }
+            //for (var i = 0f; i < 2f; i += 0.05f)
+            //{
+            //    var truncate = Math.Truncate(i + 0.2f);
+            //    var fraction = (i - truncate) / 2f;
+
+            //    Console.WriteLine("{0}:{1}", i, fraction);
+            //}
+            //Time(10);
 
             new Logging.ConsoleLogger();
             //new ConsoleListener();

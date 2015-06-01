@@ -367,7 +367,7 @@ namespace COG.Graphics
         private AssetManager m_assets;
         private Program m_currentProgram;
         private List<Program> m_programs = new List<Program>();
-        private Dictionary<string, AutoVertexUniform> m_uniforms = new Dictionary<string, AutoVertexUniform>();
+        private Dictionary<string, AutoProgramUniform> m_uniforms = new Dictionary<string, AutoProgramUniform>();
 
         public Program CurrentProgram { get { return m_currentProgram; } }
 
@@ -411,7 +411,7 @@ namespace COG.Graphics
                     //auto sync params
                     foreach (var uni in program.Uniforms)
                     {
-                        AutoVertexUniform autoUni;
+                        AutoProgramUniform autoUni;
                         if (m_uniforms.TryGetValue(uni.Name, out autoUni))
                             autoUni.Update(uni);
                     }
@@ -424,14 +424,24 @@ namespace COG.Graphics
 
         }
 
-        public AutoVertexUniformMatrix4 CreateAutoUniformMatrix4(string name)
+        public AutoProgramUniformMatrix4 CreateAutoUniformMatrix4(string name)
         {
-            var uniform = new AutoVertexUniformMatrix4(this, name);
+            var uniform = new AutoProgramUniformMatrix4(this, name);
             m_uniforms.Add(name, uniform);
 
             i_lastUpdate++;
 
             return uniform;
+        }
+
+        public AutoProgramUniformMatrix4 GetOrCreateAutoUniformMatrix4(string name)
+        {
+            AutoProgramUniform uniform;
+            if (!m_uniforms.TryGetValue(name, out uniform))
+                return CreateAutoUniformMatrix4(name);
+
+            System.Diagnostics.Debug.Assert(uniform is AutoProgramUniformMatrix4, "Type mismatch for uniform");
+            return uniform as AutoProgramUniformMatrix4;
         }
 
         protected override void DisposeManaged()
@@ -444,12 +454,12 @@ namespace COG.Graphics
 
     }
 
-    public abstract class AutoVertexUniform
+    public abstract class AutoProgramUniform
     {
         protected ProgramManager m_programs;
         protected string m_name;
 
-        protected AutoVertexUniform(ProgramManager programs, string name)
+        protected AutoProgramUniform(ProgramManager programs, string name)
         {
             m_programs = programs;
             m_name = name;
@@ -458,12 +468,12 @@ namespace COG.Graphics
         public abstract void Update(VertexUniform uniform);
     }
 
-    public abstract class AutoVertexUniform<T> : AutoVertexUniform
+    public abstract class AutoProgramUniform<T> : AutoProgramUniform
         where T : IEquatable<T>
     {
         protected T m_value;
 
-        protected AutoVertexUniform(ProgramManager programs, string name)
+        protected AutoProgramUniform(ProgramManager programs, string name)
             : base(programs, name)
         {
 
@@ -479,11 +489,11 @@ namespace COG.Graphics
         }
     }
 
-    public class AutoVertexUniformMatrix4 : AutoVertexUniform<Matrix4>
+    public class AutoProgramUniformMatrix4 : AutoProgramUniform<Matrix4>
     {
         private bool m_transpose = false;
 
-        internal AutoVertexUniformMatrix4(ProgramManager programs, string name)
+        internal AutoProgramUniformMatrix4(ProgramManager programs, string name)
             : base(programs, name)
         {
 

@@ -14,6 +14,10 @@ namespace COG.Graphics
 
         protected float m_targetFov = 0.7f;
 
+        protected bool m_programsInited = false;
+        protected AutoProgramUniformMatrix4 m_view, m_projection, m_viewProjection;
+
+
         //protected ViewFrustum
         #endregion Variables
         //unused, not sure how to do reflections yet
@@ -59,6 +63,21 @@ namespace COG.Graphics
             //Vector3 rotAxis = Vector3.Cross(-Vector3.UnitZ, forwardVector);
             //rotAxis = Vector3.Normalize(rotAxis);
             //Orientation = Quaternion.FromAxisAngle(rotAxis, rotAngle);
+        }
+
+        public virtual void UpdateUniforms(ProgramManager programs)
+        {
+            if (!m_programsInited)
+            {
+                m_programsInited = true;
+                m_view = programs.GetOrCreateAutoUniformMatrix4("view");
+                m_projection = programs.GetOrCreateAutoUniformMatrix4("projection");
+                m_viewProjection = programs.GetOrCreateAutoUniformMatrix4("viewProjection");
+            }
+
+            m_view.SetValue(ViewMatrix);
+            m_projection.SetValue(ProjectionMatrix);
+            m_viewProjection.SetValue(ViewMatrix * ProjectionMatrix);
         }
 
         public virtual void Update(float delta)

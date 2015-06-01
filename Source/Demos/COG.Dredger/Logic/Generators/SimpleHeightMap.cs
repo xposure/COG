@@ -3,6 +3,43 @@ using COG.LibNoise.Generator;
 using COG.LibNoise.Operator;
 namespace COG.Dredger.Logic
 {
+    public interface IGenerator
+    {
+        int GetHeight(int x, int z, int modifier);
+    }
+
+    public class SimpleGenerator : IGenerator
+    {
+        private Perlin m_elevation;
+        private Perlin m_roughness;
+        private Perlin m_detail;
+
+        public SimpleGenerator()
+        {
+            m_elevation = new Perlin(1, 1, 1, 1, 1024, QualityMode.Low);
+            m_roughness = new Perlin(1, 1, 1, 1, 2048, QualityMode.Medium);
+            m_detail = new Perlin(1, 1, 1, 1, 4096, QualityMode.High);
+        }
+
+        public int GetHeight(int x, int z, int modifier)
+        {
+            var evelation = (m_elevation.GetValue(x, 0, z) + 1) / 2f;
+            var roughness = (m_roughness.GetValue(x, 1024, z) + 1) / 2f;
+            var detail = (m_detail.GetValue(x, 2048, z) + 1) / 2f;
+
+            return (int)(evelation + (detail * roughness)) * modifier + modifier;
+        }
+
+    }
+
+    public class FlatGenerator : IGenerator
+    {
+        public int GetHeight(int x, int z, int modifier)
+        {
+            return modifier;
+        }
+    }
+
     public partial class Generators
     {
         public static System.Func<int, int, uint> SimpleHeight(int cx, int cy, int cz, int width, int depth, float scale, NoiseType noise = NoiseType.Perlin, int sealevel = 8)

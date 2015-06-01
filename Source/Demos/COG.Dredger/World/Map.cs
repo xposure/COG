@@ -3,11 +3,15 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
+using COG.Dredger.Logic;
+using COG.Dredger.Rendering;
+using COG.Framework;
+using COG.Graphics;
 using OpenTK;
 
 namespace COG.Dredger.World
 {
-    public class Map
+    public class Map : DisposableObject
     {
         private int m_columnsXZ;
         private int m_columnsXZSqr;
@@ -34,6 +38,12 @@ namespace COG.Dredger.World
             return m_columns[columnX + (columnZ * m_columnsXZ)];
         }
 
+        public void Generate(IGenerator gen)
+        {
+            foreach (var column in Columns)
+                column.GenerateMap(gen);
+        }
+
         public IEnumerable<MapColumn> Columns
         {
             get
@@ -43,17 +53,43 @@ namespace COG.Dredger.World
             }
         }
 
+        public MapBlock GetBlock(int x, int y, int z)
+        {
+            if (x < 0 || y < 0 || z < 0 || x >= BlocksX || z >= BlocksZ || y >= Config.MAP_COLUMN_HEIGHT)
+                return MapBlockDescriptor.Air.Block;
+
+            var cx = x / Config.MAP_COLUMN_SIZE;
+            var cz = z / Config.MAP_COLUMN_SIZE;
+            var index = cz * m_columnsXZ + cx;
+
+            return m_columns[index].GetBlock(x - (cx * Config.MAP_COLUMN_SIZE), y, z - (cz * Config.MAP_COLUMN_SIZE));
+            
+        }
+
+        public void Render(Program program)
+        {
+            foreach (var column in Columns)
+                column.Render(program);
+        }
+
+        protected override void DisposeManaged()
+        {
+            base.DisposeManaged();
+            
+            foreach (var column in Columns)
+                column.Dispose();
+        }
     }
 
-    public class MapColumn
+    public class MapColumn : DisposableObject
     {
         private Map m_map;
         private int m_x, m_z;
         private int m_maxHeight;
+        private DynamicMesh m_mesh;
 
         //data is stored by Z, X, Y - (y + (x  
         private MapBlock[] m_blocks;
-        private MapBlock[,,] m_blocks2;
 
         public MapColumn(int x, int z, Map map)
         {
@@ -62,7 +98,6 @@ namespace COG.Dredger.World
             m_map = map;
 
             m_blocks = new MapBlock[Config.MAP_COLUMN_SIZE_SQR * Config.MAP_COLUMN_HEIGHT];
-            m_blocks2 = new MapBlock[Config.MAP_COLUMN_SIZE, Config.MAP_COLUMN_SIZE, Config.MAP_COLUMN_HEIGHT];
         }
 
         public int MapX { get { return m_x; } }
@@ -75,24 +110,21 @@ namespace COG.Dredger.World
         public void ComputeMaxHeight()
         {
             m_maxHeight = 0;
-            //var it = 0;
 
-            IterateZX((x, z) =>
+            IterateZX((bi) =>
             {
                 for (var y = Config.MAP_COLUMN_HEIGHT - 1; y >= m_maxHeight; --y)
                 {
-                    //it++;
-                    var index = (x * Config.MAP_COLUMN_SIZE) + (z * Config.MAP_COLUMN_SIZE * Config.MAP_COLUMN_SIZE) + y;
-                    //var index = x + (z * Config.MAP_COLUMN_SIZE) + (y * Config.MAP_COLUMN_SIZE * Config.MAP_COLUMN_SIZE);
-                    var block = m_blocks[index];
-                    if (!block.IsAir)
+                    var block = m_blocks[bi + y];
+                    if (!block.IsEmpty)
                     {
                         Utility.Max(m_maxHeight, y);
                     }
                 }
             });
-            //Console.WriteLine("it: {0}", it);
         }
+
+
 
         //IterateZX shows almost no difference in speed compared to hand typing the loop out
         //In fact its so close that its 50/50 on which one performs faster, my guess is that each 
@@ -109,13 +141,140 @@ namespace COG.Dredger.World
                 }
             }
         }
+
+        public void IterateZX(Action<int> action)
+        {
+            for (var z = 0; z < Config.MAP_COLUMN_SIZE; z++)
+            {
+                for (var x = 0; x < Config.MAP_COLUMN_SIZE; x++)
+                {
+                    action(IndexXZ(x, z));
+                }
+            }
+        }
+
+        public int IndexXZ(int x, int z)
+        {
+            return (z * Config.MAP_COLUMN_SIZE * Config.MAP_COLUMN_HEIGHT) + (x * Config.MAP_COLUMN_HEIGHT);
+        }
+
+        public void GenerateMap(IGenerator gen)
+        {
+            IterateZX((x, z) =>
+            {
+                var bi = IndexXZ(x, z);
+                var height = gen.GetHeight(x + BlockMinX, z + BlockMinZ, Config.MAP_COLUMN_HEIGHT / 2);
+                for (var y = 0; y <= height; y++)
+                {
+                    if (y < height - 4)
+                        m_blocks[bi + y] = MapBlockDescriptor.Stone.Block;
+                    else if (y == height)
+                        m_blocks[bi + y] = MapBlockDescriptor.Grass.Block;
+                    else
+                        m_blocks[bi + y] = MapBlockDescriptor.Dirt.Block;
+
+                }
+            });
+
+            m_mesh = new DynamicMesh(VertexPositionTextureColor.VertexDeclaration);
+
+            var amount = Surface.Extract(m_mesh, m_blocks, Config.MAP_COLUMN_SIZE, Config.MAP_COLUMN_SIZE, Config.MAP_COLUMN_HEIGHT);
+            Console.WriteLine("Extract {0}: verts - {1}", new Vector2(BlockMinX, BlockMinZ), amount);
+        }
+
+        public MapBlock GetBlock(int x, int y, int z)
+        {
+            return m_blocks[IndexXZ(x, z) + y];
+        }
+
+        public void Render(Program program)
+        {
+            var p = new Vector3(BlockMinX, 0, BlockMinZ);
+            var m = Matrix4.CreateTranslation(p) * Matrix4.CreateScale(1f);
+            program.SetUniformMatrix4("model", m);
+            m_mesh.Render(program);
+        }
+
+        protected override void DisposeManaged()
+        {
+            base.DisposeManaged();
+
+            if (m_mesh)
+                m_mesh.Dispose();
+        }
     }
 
-    [StructLayout(LayoutKind.Sequential)]
+    public class MapBlockDescriptor
+    {
+        public static readonly MapBlockDescriptor Air;
+        public static readonly MapBlockDescriptor Dirt;
+        public static readonly MapBlockDescriptor Grass;
+        public static readonly MapBlockDescriptor Stone;
+
+        public static readonly MapBlockDescriptor[] m_blocks = new MapBlockDescriptor[256];
+
+        static MapBlockDescriptor()
+        {
+            Air = new MapBlockDescriptor(0, new Color(0, 0, 0, 0));
+            Dirt = new MapBlockDescriptor(1, Color.Brown);
+            Grass = new MapBlockDescriptor(2, Color.Green);
+            Stone = new MapBlockDescriptor(3, Color.Gray);
+
+            FillEmpty();
+        }
+
+        private static void FillEmpty()
+        {
+            for (var i = 0; i < m_blocks.Length; i++)
+                if (m_blocks[i] == null)
+                    m_blocks[i] = Air;
+        }
+
+        public static MapBlockDescriptor Find(byte b)
+        {
+            return m_blocks[b];
+        }
+
+        private byte m_id;
+        private Color m_color;
+
+        public MapBlockDescriptor(byte id, Color color)
+        {
+            m_id = id;
+            m_color = color;
+
+            m_blocks[id] = this;
+        }
+
+        public byte ID { get { return m_id; } }
+        public Color Color { get { return m_color; } }
+        public MapBlock Block { get { return new MapBlock() { m_byte = ID }; } }
+    }
+
+    [StructLayout(LayoutKind.Sequential, Pack = 0, Size = 1)]
     public struct MapBlock
     {
-        private long m_byte;
+        public byte m_byte;
 
-        public bool IsAir { get { return m_byte == 0; } }
+        public MapBlockDescriptor Descriptor { get { return MapBlockDescriptor.Find(m_byte); } }
+
+        public bool IsEmpty { get { return m_byte == 0; } }
+
+        //public bool IsAir { get { return m_byte == 0; } }
+        //public bool IsDirt { get { return m_byte == 1; } }
+        //public bool IsGrass { get { return m_byte == 2; } }
+        //public bool IsStone { get { return m_byte == 3; } }
+
+        //public static MapBlock GetType(byte b)
+        //{
+        //    switch (b)
+        //    {
+        //        case 1: return Dirt;
+        //        case 2: return Grass;
+        //        case 3: return Stone;
+        //    }
+
+        //    return Air;
+        //}
     }
 }

@@ -153,7 +153,7 @@ namespace COG.Dredger.Rendering
             //mesh.SetIndices()
         }
 
-        public void RenderOpaque(Program program)
+        public void RenderOpaque(Program program, Vector3 p)
         {
             //for (var i = 0; i < 8; i++)
             //    for (var j = 0; j < 8; j++)
@@ -167,13 +167,18 @@ namespace COG.Dredger.Rendering
 
             //        }
 
-            var p = new Vector3(X, Y, Z);
             var m = Matrix4.CreateTranslation(p) * Matrix4.CreateScale(1f);
-
+            
             program.SetUniformMatrix4("model", m);
             foreach (var side in sides)
                 side.opaqueMesh.Render(program);
             //opaqueMesh.Render(program);
+        }
+
+        public void RenderOpaque(Program program)
+        {
+            var p = new Vector3(X, Y, Z);
+            RenderOpaque(program, p);
         }
 
         public void RenderAlpha(Program program)
