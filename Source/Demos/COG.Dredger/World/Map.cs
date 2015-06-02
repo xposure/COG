@@ -53,10 +53,10 @@ namespace COG.Dredger.World
             }
         }
 
-        public MapBlock GetBlock(int x, int y, int z)
+        public Voxel GetBlock(int x, int y, int z)
         {
             if (x < 0 || y < 0 || z < 0 || x >= BlocksX || z >= BlocksZ || y >= Config.MAP_COLUMN_HEIGHT)
-                return MapBlockDescriptor.Air.Block;
+                return VoxelDescriptor.Air.Block;
 
             var cx = x / Config.MAP_COLUMN_SIZE;
             var cz = z / Config.MAP_COLUMN_SIZE;
@@ -89,7 +89,7 @@ namespace COG.Dredger.World
         private DynamicMesh m_mesh;
 
         //data is stored by Z, X, Y - (y + (x  
-        private MapBlock[] m_blocks;
+        private Voxel[] m_blocks;
 
         public MapColumn(int x, int z, Map map)
         {
@@ -97,7 +97,7 @@ namespace COG.Dredger.World
             m_z = z;
             m_map = map;
 
-            m_blocks = new MapBlock[Config.MAP_COLUMN_SIZE_SQR * Config.MAP_COLUMN_HEIGHT];
+            m_blocks = new Voxel[Config.MAP_COLUMN_SIZE_SQR * Config.MAP_COLUMN_HEIGHT];
         }
 
         public int MapX { get { return m_x; } }
@@ -167,11 +167,11 @@ namespace COG.Dredger.World
                 for (var y = 0; y <= height; y++)
                 {
                     if (y < height - 4)
-                        m_blocks[bi + y] = MapBlockDescriptor.Stone.Block;
+                        m_blocks[bi + y] = VoxelDescriptor.Stone.Block;
                     else if (y == height)
-                        m_blocks[bi + y] = MapBlockDescriptor.Grass.Block;
+                        m_blocks[bi + y] = VoxelDescriptor.Grass.Block;
                     else
-                        m_blocks[bi + y] = MapBlockDescriptor.Dirt.Block;
+                        m_blocks[bi + y] = VoxelDescriptor.Dirt.Block;
 
                 }
             });
@@ -182,7 +182,7 @@ namespace COG.Dredger.World
             Console.WriteLine("Extract {0}: verts - {1}", new Vector2(BlockMinX, BlockMinZ), amount);
         }
 
-        public MapBlock GetBlock(int x, int y, int z)
+        public Voxel GetBlock(int x, int y, int z)
         {
             return m_blocks[IndexXZ(x, z) + y];
         }
@@ -204,21 +204,21 @@ namespace COG.Dredger.World
         }
     }
 
-    public class MapBlockDescriptor
+    public class VoxelDescriptor
     {
-        public static readonly MapBlockDescriptor Air;
-        public static readonly MapBlockDescriptor Dirt;
-        public static readonly MapBlockDescriptor Grass;
-        public static readonly MapBlockDescriptor Stone;
+        public static readonly VoxelDescriptor Air;
+        public static readonly VoxelDescriptor Dirt;
+        public static readonly VoxelDescriptor Grass;
+        public static readonly VoxelDescriptor Stone;
 
-        public static readonly MapBlockDescriptor[] m_blocks = new MapBlockDescriptor[256];
+        public static readonly VoxelDescriptor[] m_blocks = new VoxelDescriptor[256];
 
-        static MapBlockDescriptor()
+        static VoxelDescriptor()
         {
-            Air = new MapBlockDescriptor(0, new Color(0, 0, 0, 0));
-            Dirt = new MapBlockDescriptor(1, Color.Brown);
-            Grass = new MapBlockDescriptor(2, Color.Green);
-            Stone = new MapBlockDescriptor(3, Color.Gray);
+            Air = new VoxelDescriptor(0, new Color(0, 0, 0, 0));
+            Dirt = new VoxelDescriptor(1, Color.Brown);
+            Grass = new VoxelDescriptor(2, Color.Green);
+            Stone = new VoxelDescriptor(3, Color.Gray);
 
             FillEmpty();
         }
@@ -230,7 +230,7 @@ namespace COG.Dredger.World
                     m_blocks[i] = Air;
         }
 
-        public static MapBlockDescriptor Find(byte b)
+        public static VoxelDescriptor Find(byte b)
         {
             return m_blocks[b];
         }
@@ -238,7 +238,7 @@ namespace COG.Dredger.World
         private byte m_id;
         private Color m_color;
 
-        public MapBlockDescriptor(byte id, Color color)
+        public VoxelDescriptor(byte id, Color color)
         {
             m_id = id;
             m_color = color;
@@ -248,15 +248,15 @@ namespace COG.Dredger.World
 
         public byte ID { get { return m_id; } }
         public Color Color { get { return m_color; } }
-        public MapBlock Block { get { return new MapBlock() { m_byte = ID }; } }
+        public Voxel Block { get { return new Voxel() { m_byte = ID }; } }
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 0, Size = 1)]
-    public struct MapBlock
+    public struct Voxel
     {
         public byte m_byte;
 
-        public MapBlockDescriptor Descriptor { get { return MapBlockDescriptor.Find(m_byte); } }
+        public VoxelDescriptor Descriptor { get { return VoxelDescriptor.Find(m_byte); } }
 
         public bool IsEmpty { get { return m_byte == 0; } }
 

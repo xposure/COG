@@ -182,7 +182,7 @@ namespace COG.Graphics
             if (!IsValid)
                 return;
 
-            m_programs.SetCurrentProgram(this);
+            m_programs.SetProgram(this);
         }
 
         private bool InitializeUniforms()
@@ -393,7 +393,7 @@ namespace COG.Graphics
             }
         }
 
-        internal void SetCurrentProgram(Program program)
+        internal void SetProgram(Program program)
         {
             if (program == null)
                 GL.UseProgram(0);

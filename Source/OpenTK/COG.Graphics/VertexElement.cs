@@ -653,6 +653,11 @@ namespace COG.Graphics
 
     //}
 
+    public interface IVertexDescriptor
+    {
+        VertexDeclaration Declaration { get; }
+    }
+
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public struct VertexPositionColor
     {
@@ -679,7 +684,7 @@ namespace COG.Graphics
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    public struct VertexPositionTextureColor
+    public struct VertexPositionTextureColor : IVertexDescriptor
     {
         public static readonly VertexDeclaration VertexDeclaration;
 
@@ -704,6 +709,8 @@ namespace COG.Graphics
             Texture = Vector2.Zero;
             Color = color;
         }
+
+        public VertexDeclaration Declaration { get { return VertexDeclaration; } }
     }
 
 }

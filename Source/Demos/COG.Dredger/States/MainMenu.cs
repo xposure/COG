@@ -133,7 +133,8 @@ namespace COG.Dredger.States
         private Volume m_volume;
         private VolumeGenerator m_vgen;
         private ChunkManager m_chunks;
-        private DefaultCamera m_camera;
+        private DefaultCamera m_worldCamera;
+        //private DefaultCamera m_guiCamera;
         private Map m_map = new Map(2);
         private bool use_camera = false;
 
@@ -148,7 +149,7 @@ namespace COG.Dredger.States
             m_vgen = new VolumeGenerator();
             m_vgen.enableAO = true;
             m_vgen.enableGreedy = true;
-            m_camera = new DefaultCamera();
+            m_worldCamera = new DefaultCamera();
             m_map.Generate(new FlatGenerator());
 
             //m_map.Generate(new SimpleGenerator());
@@ -207,12 +208,12 @@ namespace COG.Dredger.States
 
             previous = current = Mouse.GetState();
 
-            m_camera.FieldOfView = 0.785398163f;
-            m_camera.AspectRatio = 4.0f / 3.0f;
-            m_camera.Near = 0.1f;
-            m_camera.Far = 1000f;
-            m_camera.Position = new Vector3(6, 10, 6);
-            m_camera.Position = new Vector3(0, 10, 0);
+            m_worldCamera.FieldOfView = 0.785398163f;
+            m_worldCamera.AspectRatio = 4.0f / 3.0f;
+            m_worldCamera.Near = 0.1f;
+            m_worldCamera.Far = 1000f;
+            m_worldCamera.Position = new Vector3(6, 10, 6);
+            m_worldCamera.Position = new Vector3(0, 10, 0);
             //m_camera.LookAt(new Vector3(0, 0,0 ));
         }
 
@@ -364,7 +365,8 @@ namespace COG.Dredger.States
 
 
             //m_camera.LookAt(new Vector3(0, 0, 0));
-            m_camera.Update((float)dt);
+            m_worldCamera.Update((float)dt);
+            m_worldCamera.UpdateUniforms(m_engine.Programs);
 
 
             //m_particles.Update(dt);
@@ -375,7 +377,6 @@ namespace COG.Dredger.States
             }
             ProcessMouse((float)dt);
 
-            m_camera.UpdateUniforms(m_engine.Programs);
         }
 
         private Vector3 start, end;
@@ -401,13 +402,26 @@ namespace COG.Dredger.States
             //m_volume.RenderAlpha(m_opaqueChunkProgram);
             //m_chunks.RenderOpaque(m_opaqueChunkProgram);
 
+            foreach (var p in GridRayTracer.raytrace(start.X, start.Y, start.Z, end.X, end.Y, end.Z))
+            {
+                //Console.WriteLine("{0} - {1}", (int)counter, p);
+
+                var block = m_map.GetBlock((int)p.X, (int)p.Y, (int)p.Z);
+                if (block.IsEmpty)
+                    continue;
+
+                var scale = 0.01f;
+                var m = Matrix4.CreateScale(1 + scale) * Matrix4.CreateTranslation(p - Vector3.One * (scale / 2f));
+                hover.RenderOpaque(m_opaqueChunkProgram, m);
+                break;
+            }
+
             m_map.Render(m_opaqueChunkProgram);
 
             //foreach (var p in GridRayTracer.raytrace(start.X, start.Y, start.Z, end.X, end.Y, end.Z))
             //    hover.RenderOpaque(m_opaqueChunkProgram, p);
 
             hover.RenderOpaque(m_opaqueChunkProgram, end);
-            GL.Disable(EnableCap.DepthTest);
 
             //var len = 100;
             //var start = m_camera.Position;
@@ -442,17 +456,7 @@ namespace COG.Dredger.States
             //}
 
 
-            foreach (var p in GridRayTracer.raytrace(start.X, start.Y, start.Z, end.X, end.Y, end.Z))
-            {
-                //Console.WriteLine("{0} - {1}", (int)counter, p);
-
-                var block = m_map.GetBlock((int)p.X, (int)p.Y, (int)p.Z);
-                if (block.IsEmpty)
-                    continue;
-
-                hover.RenderOpaque(m_opaqueChunkProgram, p);
-                break;
-            }
+            //GL.Disable(EnableCap.DepthTest);
 
             //hover.RenderOpaque(m_opaqueChunkProgram, m_camera.Position + m_camera.Direction * 100 + new Vector3(-0.5f, -0.5f, -0.5f));
 
@@ -550,13 +554,13 @@ namespace COG.Dredger.States
                 }
 
                 current = OpenTK.Input.Mouse.GetState();
-                var dx = (previous.X - current.X) * 0.25f;
-                var dy = (previous.Y - current.Y) * 0.25f;
+                var dx = (previous.X - current.X) *  delta;
+                var dy = (previous.Y - current.Y) * delta;
 
                 //var pitch = (float)Math.Sin(m_camera.Direction.Y);
 
-                yaw += (dx * delta);
-                pitch += (dy * delta);
+                yaw += dx;
+                pitch += dy;
 
                 pitch = Utility.Clamp(pitch, 1.5f, -1.5f);
                 yaw = Utility.WrapAngle(yaw);
@@ -567,7 +571,7 @@ namespace COG.Dredger.States
                 var p = Vector3.Transform(-Vector3.UnitZ, qyaw * qpitch);
                 p.Normalize();
 
-                m_camera.Direction = p;
+                m_worldCamera.Direction = p;
 
                 //Console.WriteLine("{0}:{1} - {2}:{3} - {4}:{5}", previous.X, previous.Y, current.X, current.Y, dx, dy);
 
@@ -577,8 +581,8 @@ namespace COG.Dredger.States
 
                 //if (current.LeftButton == ButtonState.Pressed)
                 {
-                    start = m_camera.Position;
-                    end = m_camera.Position + m_camera.Direction * 100;
+                    start = m_worldCamera.Position;
+                    end = m_worldCamera.Position + m_worldCamera.Direction * 100;
                     //Console.Clear();
                 }
                 //Console.WriteLine("{0}:{1}:{2}", yaw, pitch, roll);

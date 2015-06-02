@@ -37,6 +37,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AxisAlignedBox2.cs" />
+    <Compile Include="Buffer.cs" />
     <Compile Include="Camera.cs" />
     <Compile Include="DynamicMesh.cs" />
     <Compile Include="Extensions.cs" />

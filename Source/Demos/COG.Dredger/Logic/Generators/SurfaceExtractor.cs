@@ -59,7 +59,7 @@ namespace COG.Dredger.Logic
 
     public class Surface
     {
-        public static int Extract(DynamicMesh mesh, MapBlock[] data, int xw, int zw, int yw)
+        public static int Extract(DynamicMesh mesh, Voxel[] data, int xw, int zw, int yw)
         {
             mesh.Begin();
 
@@ -298,7 +298,7 @@ namespace COG.Dredger.Logic
                                 //var cr = ((c >> 16) & 0xff) / 255f;
                                 //var cg = ((c >> 8) & 0xff) / 255f;
                                 //var cb = (c & 0xff) / 255f;
-                                var desc = MapBlockDescriptor.Find(c);
+                                var desc = VoxelDescriptor.Find(c);
                                 //var block = MapBlock.GetType(c);
                                 var aouvs = new float[4];
                                 float[] AOcurve = new float[] { 0.0f, 0.6f, 0.8f, 1.0f };
