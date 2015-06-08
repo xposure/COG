@@ -21,26 +21,105 @@ namespace COG.Dredger
 
     }
 
-    public class Map : DisposableObject
+    public class VoxelMeta
+    {
+
+    }
+
+    public class Map
+    {
+        private int m_cellCount;
+        private int m_chunksHorizontal;
+        private Voxel[] m_cells;
+        private VoxelMeta[] m_cellsMeta;
+
+        public Map(int chunksHorizontal)
+        {
+            m_chunksHorizontal = chunksHorizontal; ;
+            m_cellCount = chunksHorizontal * chunksHorizontal * Config.MAP_HEIGHT * Config.MAP_CHUNK_SIZE;
+            m_cells = new Voxel[m_cellCount];
+            m_cellsMeta = new VoxelMeta[m_cellCount];
+        }
+
+        public Voxel GetCell(int index)
+        {
+            return m_cells[index];
+        }
+
+        public void SetCell(int index, Voxel cell)
+        {
+            m_cells[index] = cell;
+        }
+
+        public int ChunksHorizontal { get { return m_chunksHorizontal; } }
+    }
+
+    public struct MapChunk
+    {
+        private Map m_map;
+        private int m_startCell;
+        private int m_chunkX, m_chunkY, m_chunkZ;
+
+        public bool IsValid { get { return m_startCell == -1 || m_map == null; } }
+        public int ChunkX { get { return m_chunkX; } }
+        public int ChunkY { get { return m_chunkY; } }
+        public int ChunkZ { get { return m_chunkZ; } }
+        public int CellOffset { get { return m_startCell; } }
+
+        public int GetIndex(int x, int z)
+        {
+            return Config.MAP_CHUNK_SIZE * z + x + m_startCell;
+        }
+
+        public static MapChunk Invalid { get { return new MapChunk() { m_startCell = -1 }; } }
+
+        public static MapChunk GetChunkFromCell(Map map, int x, int y, int z)
+        {
+            if (Utility.NotInRange(x, 0, map.ChunksHorizontal * Config.MAP_CHUNK_SIZE))
+                return Invalid;
+
+            if (Utility.NotInRange(z, 0, map.ChunksHorizontal * Config.MAP_CHUNK_SIZE))
+                return Invalid;
+
+            //is this a good idea, it would at least semi keep neighboring cells in memory close together
+            //on the other hand its treating chunks as cubes rather than layers which is how
+            //the game will be using them
+            //if (Utility.NotInRange(y, 0, map.ChunksY * Config.MAP_COLUMN_SIZE))
+            //    return Invalid;
+
+            if (Utility.NotInRange(y, 0, Config.MAP_HEIGHT))
+                return Invalid;
+
+            var cx = x / Config.MAP_CHUNK_SIZE;
+            var cz = z / Config.MAP_CHUNK_SIZE;
+            var cy = y;
+
+            var index = ((cz * map.ChunksHorizontal * map.ChunksHorizontal) + (cx * map.ChunksHorizontal) + cy);
+            return new MapChunk() { m_map = map, m_startCell = index * Config.MAP_CHUNK_SIZE2, m_chunkX = cx, m_chunkY = cy, m_chunkZ = cz };
+        }
+    }
+
+
+    public class Map2 : DisposableObject
     {
         private int m_columnsXZ;
         private int m_columnsXZSqr;
-        private MapColumn[] m_columns;
+        private MapColumn2[] m_columns;
 
 
-        public Map(int columnsXZ)
+        public Map2(int columnsXZ)
         {
             m_columnsXZ = columnsXZ;
             m_columnsXZSqr = m_columnsXZ * m_columnsXZ;
 
-            m_columns = new MapColumn[m_columnsXZSqr];
-            m_columns.InitArray(i => { return new MapColumn(i % m_columnsXZ, i / m_columnsXZ, this); });
+            m_columns = new MapColumn2[m_columnsXZSqr];
+            m_columns.InitArray(i => { return new MapColumn2(i % m_columnsXZ, i / m_columnsXZ, this); });
         }
 
         public int BlocksX { get { return m_columnsXZ * Config.MAP_COLUMN_SIZE; } }
         public int BlocksZ { get { return m_columnsXZ * Config.MAP_COLUMN_SIZE; } }
 
-        public MapColumn GetMapColumn(int columnX, int columnZ)
+        public MapColumn2 GetMapColumn(int columnX, int columnZ)
         {
             if (columnX < 0 || columnZ < 0 || columnX >= m_columnsXZ || columnZ >= m_columnsXZ)
                 return null;
@@ -54,7 +133,7 @@ namespace COG.Dredger
                 column.GenerateMap(gen);
         }
 
-        public IEnumerable<MapColumn> Columns
+        public IEnumerable<MapColumn2> Columns
         {
             get
             {
@@ -73,7 +152,7 @@ namespace COG.Dredger
             var index = cz * m_columnsXZ + cx;
 
             return m_columns[index].GetBlock(x - (cx * Config.MAP_COLUMN_SIZE), y, z - (cz * Config.MAP_COLUMN_SIZE));
-            
+
         }
 
         public void Render(Program program)
@@ -85,24 +164,24 @@ namespace COG.Dredger
         protected override void DisposeManaged()
         {
             base.DisposeManaged();
-            
+
             foreach (var column in Columns)
                 column.Dispose();
         }
     }
 
-    public class MapColumn : DisposableObject
+    public class MapColumn2 : DisposableObject
     {
-        private Map m_map;
+        private Map2 m_map;
         private int m_x, m_z;
         private int m_maxHeight;
         private DynamicMesh m_mesh;
 
         //data is stored by Z, X, Y - (y + (x  
         private Voxel[] m_blocks;
-        private MapLayer[] m_layers;
+        private MapLayer2[] m_layers;
 
-        public MapColumn(int x, int z, Map map)
+        public MapColumn2(int x, int z, Map2 map)
         {
             m_x = x;
             m_z = z;
@@ -111,8 +190,8 @@ namespace COG.Dredger
 
             m_blocks = new Voxel[Config.MAP_COLUMN_SIZE_SQR * Config.MAP_COLUMN_HEIGHT];
 
-            m_layers = new MapLayer[Config.MAP_COLUMN_HEIGHT];
-            m_layers.InitArray(y => new MapLayer(x, y, z, map));
+            m_layers = new MapLayer2[Config.MAP_COLUMN_HEIGHT];
+            m_layers.InitArray(y => new MapLayer2(x, y, z, map));
         }
 
         public int MapX { get { return m_x; } }
@@ -217,9 +296,9 @@ namespace COG.Dredger
         }
     }
 
-    public class MapLayer
+    public class MapLayer2
     {
-        private Map m_map;
+        private Map2 m_map;
         private int m_x, m_y, m_z;
         private int m_maxHeight;
         private DynamicMesh m_mesh;
@@ -227,7 +306,7 @@ namespace COG.Dredger
         //data is stored by Z, X, Y - (y + (x  
         private Voxel[] m_blocks;
 
-        public MapLayer(int x, int y, int z, Map map)
+        public MapLayer2(int x, int y, int z, Map2 map)
         {
             m_x = x;
             m_y = y;

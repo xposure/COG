@@ -28,7 +28,7 @@ namespace COG.Dredger
         */
 
 
-        static void Test(Map map)
+        static void Test(Map2 map)
         {
             foreach (var column in map.Columns)
                 column.ComputeMaxHeight();
@@ -54,7 +54,7 @@ namespace COG.Dredger
 
         static void Time(int iterations)
         {
-            var map = new Map(16);
+            var map = new Map2(16);
 
             for (var i = 0; i < iterations; i++)
             {

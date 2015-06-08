@@ -134,7 +134,7 @@ namespace COG.Dredger.States
         private ChunkManager m_chunks;
         private DefaultCamera m_worldCamera;
         //private DefaultCamera m_guiCamera;
-        private Map m_map = new Map(2);
+        private Map2 m_map = new Map2(2);
         private bool use_camera = false;
 
         private Atma.Font m_font;

@@ -1913,6 +1913,25 @@ namespace OpenTK
             return result;
         }
 
+        public static bool InRange<T>(T value, T min, T max)
+            where T : System.IComparable<T>
+        {
+            T result = value;
+            if (value.CompareTo(max) > 0)
+                return false;
+
+            if (value.CompareTo(min) < 0)
+                return false;
+
+            return true;
+        }
+
+        public static bool NotInRange<T>(T value, T min, T max)
+            where T : System.IComparable<T>
+        {
+            return !InRange(value, min, max);
+        }
+
         public static float Lerp(float x, float y, float amount)
         {
             return x + (y - x) * amount;

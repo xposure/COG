@@ -19,5 +19,7 @@ namespace COG.Dredger
             for (var i = 0; i < array.Length; i++)
                 array[i] = ctor(i);
         }
+
+
     }
 }
