@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using COG.Dredger.World;
 using COG.Graphics;
 using OpenTK;
 using OpenTK.Graphics.OpenGL4;

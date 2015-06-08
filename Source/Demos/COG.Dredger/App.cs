@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
 using COG.Dredger.States;
-using COG.Dredger.World;
 
 namespace COG.Dredger
 {

@@ -9,8 +9,18 @@ using COG.Framework;
 using COG.Graphics;
 using OpenTK;
 
-namespace COG.Dredger.World
+namespace COG.Dredger
 {
+    /*
+     * Top occluded and unoccluded voxel mesh 
+     * 
+     * 
+     */
+    public class World
+    {
+
+    }
+
     public class Map : DisposableObject
     {
         private int m_columnsXZ;
@@ -90,6 +100,7 @@ namespace COG.Dredger.World
 
         //data is stored by Z, X, Y - (y + (x  
         private Voxel[] m_blocks;
+        private MapLayer[] m_layers;
 
         public MapColumn(int x, int z, Map map)
         {
@@ -97,11 +108,15 @@ namespace COG.Dredger.World
             m_z = z;
             m_map = map;
 
+
             m_blocks = new Voxel[Config.MAP_COLUMN_SIZE_SQR * Config.MAP_COLUMN_HEIGHT];
+
+            m_layers = new MapLayer[Config.MAP_COLUMN_HEIGHT];
+            m_layers.InitArray(y => new MapLayer(x, y, z, map));
         }
 
         public int MapX { get { return m_x; } }
-        public int MapY { get { return m_z; } }
+        public int MapZ { get { return m_z; } }
         public int BlockMinX { get { return m_x * Config.MAP_COLUMN_SIZE; } }
         public int BlockMinZ { get { return m_z * Config.MAP_COLUMN_SIZE; } }
         public int BlockMaxX { get { return (m_x + 1) * Config.MAP_COLUMN_SIZE - 1; } }
@@ -123,8 +138,6 @@ namespace COG.Dredger.World
                 }
             });
         }
-
-
 
         //IterateZX shows almost no difference in speed compared to hand typing the loop out
         //In fact its so close that its 50/50 on which one performs faster, my guess is that each 
@@ -202,6 +215,41 @@ namespace COG.Dredger.World
             if (m_mesh)
                 m_mesh.Dispose();
         }
+    }
+
+    public class MapLayer
+    {
+        private Map m_map;
+        private int m_x, m_y, m_z;
+        private int m_maxHeight;
+        private DynamicMesh m_mesh;
+
+        //data is stored by Z, X, Y - (y + (x  
+        private Voxel[] m_blocks;
+
+        public MapLayer(int x, int y, int z, Map map)
+        {
+            m_x = x;
+            m_y = y;
+            m_z = z;
+            m_map = map;
+
+            m_blocks = new Voxel[Config.MAP_COLUMN_SIZE_SQR];
+        }
+
+        public int MapX { get { return m_x; } }
+        public int MapY { get { return m_y; } }
+        public int MapZ { get { return m_z; } }
+        public int BlockMinX { get { return m_x * Config.MAP_COLUMN_SIZE; } }
+        public int BlockMinZ { get { return m_z * Config.MAP_COLUMN_SIZE; } }
+        public int BlockMaxX { get { return (m_x + 1) * Config.MAP_COLUMN_SIZE - 1; } }
+        public int BlockMaxZ { get { return (m_z + 1) * Config.MAP_COLUMN_SIZE - 1; } }
+
+        public int IndexXZ(int x, int z)
+        {
+            return (z * Config.MAP_COLUMN_SIZE + x);
+        }
+
     }
 
     public class VoxelDescriptor

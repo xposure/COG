@@ -1,7 +1,6 @@
 ﻿using System;
 using COG.Dredger.Logic;
 using COG.Dredger.Rendering;
-using COG.Dredger.World;
 using COG.Framework;
 using COG.Graphics;
 using OpenTK;
