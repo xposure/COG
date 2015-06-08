@@ -195,7 +195,7 @@ namespace COG.Dredger.States
               new int[] { 1, 1, 1 },
                   (i, j, k) =>
                   {
-                      return 0xff0000;
+                      return 0xffffff;
                   }
               );
 
@@ -396,11 +396,13 @@ namespace COG.Dredger.States
             GL.ClearColor(0.5f, 0.5f, 1f, 1f);
             GL.Clear(ClearBufferMask.DepthBufferBit | ClearBufferMask.ColorBufferBit);
 
-
             //m_mesh2.Render(m_program);
             //m_volume.RenderOpaque(m_opaqueChunkProgram);
             //m_volume.RenderAlpha(m_opaqueChunkProgram);
             //m_chunks.RenderOpaque(m_opaqueChunkProgram);
+            m_opaqueChunkProgram.SetUniformVec("tint", new Vector3(1, 1, 1));
+            m_opaqueChunkProgram.SetUniformFloat("alpha", 1f);
+            m_map.Render(m_opaqueChunkProgram);
 
             foreach (var p in GridRayTracer.raytrace(start.X, start.Y, start.Z, end.X, end.Y, end.Z))
             {
@@ -410,18 +412,38 @@ namespace COG.Dredger.States
                 if (block.IsEmpty)
                     continue;
 
-                var scale = 0.01f;
+
+                m_opaqueChunkProgram.SetUniformVec("tint", new Vector3(1, 1, 0));
+                m_opaqueChunkProgram.SetUniformFloat("alpha", 0.5f);
+                GL.DepthFunc(DepthFunction.Lequal);
+                GL.DepthMask(false);
+                GL.Enable(EnableCap.Blend);
+                GL.BlendFunc(BlendingFactorSrc.SrcAlpha, BlendingFactorDest.OneMinusSrcAlpha);
+
+
+                var scale = 0.002f;
                 var m = Matrix4.CreateScale(1 + scale) * Matrix4.CreateTranslation(p - Vector3.One * (scale / 2f));
                 hover.RenderOpaque(m_opaqueChunkProgram, m);
+
+                GL.DepthMask(true);
+                GL.Disable(EnableCap.Blend);
+
                 break;
             }
 
-            m_map.Render(m_opaqueChunkProgram);
 
             //foreach (var p in GridRayTracer.raytrace(start.X, start.Y, start.Z, end.X, end.Y, end.Z))
             //    hover.RenderOpaque(m_opaqueChunkProgram, p);
+            {
+                GL.DepthMask(false);
+                GL.DepthFunc(DepthFunction.Always);
+                var scale = 0.5f;
+                var m = Matrix4.CreateScale(scale) * Matrix4.CreateTranslation(end - Vector3.One * (scale / 2f));
 
-            hover.RenderOpaque(m_opaqueChunkProgram, end);
+                m_opaqueChunkProgram.SetUniformVec("tint", new Vector3(1, 0, 0));
+                m_opaqueChunkProgram.SetUniformFloat("alpha", 0.75f);
+                hover.RenderOpaque(m_opaqueChunkProgram, m);
+            }
 
             //var len = 100;
             //var start = m_camera.Position;
@@ -594,5 +616,7 @@ namespace COG.Dredger.States
             }
         }
     }
+
+
 
 }

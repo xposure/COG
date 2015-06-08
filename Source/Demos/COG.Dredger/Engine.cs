@@ -32,6 +32,14 @@ namespace COG.Dredger
 
     public class Engine : Registry
     {
+        private static Engine g_engine;
+        public static Engine Instance { get { return g_engine; } }
+
+        public Engine()
+        {
+            g_engine = this;
+        }
+
         private Config m_config;
         private GameWindow m_gameWindow;
         private AssetManager m_assets;

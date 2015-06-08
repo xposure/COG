@@ -311,24 +311,93 @@ namespace COG.Graphics
             return null;
         }
 
-        public bool SetUniformMatrix4(string name, Matrix4 matrix)
+        private VertexUniform CheckUniform(string name, VertexUniformType type, VertexUniformSemantic semantic)
         {
             var uniform = GetUniform(name);
             if (uniform == null)
             {
                 g_logger.Warn("{0} uniform {1} doesn't exist.", m_uri, name);
-                return false;
+                return null;
             }
 
-            if (uniform.Semantic != VertexUniformSemantic.Matrix4)
+            if (uniform.Semantic != semantic)
             {
-                g_logger.Warn("{0} uniform {1} is not a Matrix4.", m_uri, name);
-                return false;
+                g_logger.Warn("{0} uniform {1} is not a {2}.", m_uri, name, semantic);
+                return null;
             }
+
+            //if (uniform.TypeCount != typeCount)
+            //{
+            //    g_logger.Warn("{0} uniform expected {1} types.", m_uri, typeCount);
+            //    return false;
+            //}
+
+            if (uniform.Type != type)
+            {
+                g_logger.Warn("{0} uniform {1} is not of type {2}.", m_uri, name, type);
+                return null;
+            }
+
+            return uniform;
+        }
+
+        public bool SetUniformFloat(string name, float value)
+        {
+            var uniform = CheckUniform(name, VertexUniformType.Float, VertexUniformSemantic.Vector);
+            if (uniform == null)
+                return false;
 
             this.Bind();
 
-            GL.UniformMatrix4(uniform.Location, false, ref matrix);
+            GL.Uniform1(uniform.Location, value);
+            return true;
+        }
+
+        public bool SetUniformVec(string name, Vector2 value)
+        {
+            var uniform = CheckUniform(name, VertexUniformType.Float, VertexUniformSemantic.Vector2);
+            if (uniform == null)
+                return false;
+
+            this.Bind();
+
+            GL.Uniform2(uniform.Location, value);
+            return true;
+        }
+
+        public bool SetUniformVec(string name, Vector3 value)
+        {
+            var uniform = CheckUniform(name, VertexUniformType.Float, VertexUniformSemantic.Vector3);
+            if (uniform == null)
+                return false;
+
+            this.Bind();
+
+            GL.Uniform3(uniform.Location, value);
+            return true;
+        }
+
+        public bool SetUniformVec(string name, Vector4 value)
+        {
+            var uniform = CheckUniform(name, VertexUniformType.Float, VertexUniformSemantic.Vector4);
+            if (uniform == null)
+                return false;
+
+            this.Bind();
+
+            GL.Uniform4(uniform.Location, value);
+            return true;
+        }
+
+        public bool SetUniformMatrix4(string name, Matrix4 value)
+        {
+            var uniform = CheckUniform(name, VertexUniformType.Float, VertexUniformSemantic.Matrix4);
+            if (uniform == null)
+                return false;
+
+            this.Bind();
+
+            GL.UniformMatrix4(uniform.Location, false, ref value);
             return true;
         }
         #endregion Methods
