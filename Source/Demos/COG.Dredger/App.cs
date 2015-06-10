@@ -101,14 +101,81 @@ namespace COG.Dredger
 
         }
 
+        public static int IndexXZ(int x, int z, int ChunksHorizontal = 2, int ChunkSize = 2)
+        {
+            var cx = x / ChunkSize;
+            var cz = z / ChunkSize;
+
+            var start = ((cz * ChunksHorizontal) + (cx)) * ChunkSize * ChunkSize;
+            var nx = x % ChunkSize;
+            var nz = z % ChunkSize;
+
+
+            var index = start + (nz * ChunkSize) + nx;
+
+            Console.WriteLine("x:{0}, z:{1}, index: {2}", x, z, index);
+            return index;
+        }
+
+        public static int CellXZ(int x, int z, int ChunksHorizontal = 2, int ChunkSize = 2)
+        {
+            var cx = x / ChunkSize;
+            var cz = z / ChunkSize;
+
+            var start = ((cz * ChunksHorizontal) + (cx)) * ChunkSize * ChunkSize;
+            var nx = x % ChunkSize;
+            var nz = z % ChunkSize;
+
+
+            var index = start + (nz * ChunkSize) + nx;
+
+            Console.WriteLine("x:{0}, z:{1}, index: {2}", x, z, index);
+            return index;
+        }
+
+        public static int ChunkXY(int x, int z, int ChunksHorizontal = 2, int ChunkSize = 2, int ChunkHeight = 2)
+        {
+            var cx = x / ChunkSize;
+            var cz = z / ChunkSize;
+
+            var start = ((cz * ChunksHorizontal) + (cx)) * ChunkSize * ChunkSize * ChunkHeight;
+            var nx = x % ChunkSize;
+            var nz = z % ChunkSize;
+
+
+            var index = start + (nz * ChunkSize * ChunkHeight) + (nx * ChunkSize);
+
+            Console.WriteLine("x:{0}, z:{1}, index: {2}", x, z, index);
+            return index;
+        }
 
         [STAThread]
         static void Main(string[] args)
         {
-            foreach (var p in GridRayTracer.raytrace(5, 5, 5, 0, 0, 0))
-            {
-                Console.WriteLine(p);
-            }
+            //foreach (var p in GridRayTracer.raytrace(5, 5, 5, 0, 0, 0))
+            //{
+            //    Console.WriteLine(p);
+            //}
+
+            for (var y = 0; y < 2; y++)
+                for (var z = 0; z < 4; z++)
+                    for (var x = 0; x < 4; x++)
+                        ChunkXY(x, z, 2, 2, 2);
+
+
+
+
+            //for (var y = 0; y < 2; y++)
+            //    for (var z = 0; z < 4; z++)
+            //        for (var x = 0; x < 4; x++)
+            //            IndexXYZ(x, z, 2, 2, 2);
+
+            //    IndexXZ(0, 0);
+            //IndexXZ(2, 1);
+            //IndexXZ(2, 2);
+            //IndexXZ(1, 3);
+            //IndexXZ(3, 2);
+            Console.Read();
             //for (var i = 0f; i < 2f; i += 0.05f)
             //{
             //    var truncate = Math.Truncate(i + 0.2f);

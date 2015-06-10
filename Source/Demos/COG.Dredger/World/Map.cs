@@ -52,6 +52,66 @@ namespace COG.Dredger
         }
 
         public int ChunksHorizontal { get { return m_chunksHorizontal; } }
+        public int CellsHorizontal { get { return m_chunksHorizontal * Config.MAP_CHUNK_SIZE; } }
+        //public IEnumerable<MapChunk> Chunks
+        //{
+        //    get
+        //    {
+        //        for (var z = 0; z < m_chunksHorizontal; z++)
+        //        {
+        //            for (var x = 0; x < m_chunksHorizontal; x++)
+        //            {
+        //                return MapChunk.GetChunkFromCell
+        //            }
+        //        }
+        //    }
+        //}
+        //public int IndexXZ(int x, int z)
+        //{
+        //    var cx = x / Config.MAP_CHUNK_SIZE;
+        //    var cz = z / Config.MAP_CHUNK_SIZE;
+
+        //    return ((cz * ChunksHorizontal * ChunksHorizontal) + (cx * ChunksHorizontal));
+        //}
+
+        public int IndexXZ(int x, int z)
+        {
+            return ((z * CellsHorizontal * CellsHorizontal) + (x * CellsHorizontal)) * Config.MAP_HEIGHT;
+        }
+
+        public void IterateZX(Action<int, int> action)
+        {
+            for (var z = 0; z < CellsHorizontal; z++)
+            {
+                for (var x = 0; x < CellsHorizontal; x++)
+                {
+                    action(x, z);
+                }
+            }
+        }
+
+        public void GenerateMap(IGenerator gen)
+        {
+            IterateZX((x, z) =>
+            {
+                var bi = IndexXZ(x, z);
+                var height = gen.GetHeight(x, z, Config.MAP_HEIGHT / 2);
+                for (var y = 0; y <= height; y++)
+                {
+                    if (y < height - 4)
+                        m_cells[bi + y] = VoxelDescriptor.Stone.Block;
+                    else if (y == height)
+                        m_cells[bi + y] = VoxelDescriptor.Grass.Block;
+                    else
+                        m_cells[bi + y] = VoxelDescriptor.Dirt.Block;
+                }
+            });
+
+            //m_mesh = new DynamicMesh(VertexPositionTextureColor.VertexDeclaration);
+
+            //var amount = Surface.Extract(m_mesh, m_blocks, Config.MAP_COLUMN_SIZE, Config.MAP_COLUMN_SIZE, Config.MAP_COLUMN_HEIGHT);
+            //Console.WriteLine("Extract {0}: verts - {1}", new Vector2(BlockMinX, BlockMinZ), amount);
+        }
     }
 
     public struct MapChunk
@@ -94,9 +154,21 @@ namespace COG.Dredger
             var cz = z / Config.MAP_CHUNK_SIZE;
             var cy = y;
 
-            var index = ((cz * map.ChunksHorizontal * map.ChunksHorizontal) + (cx * map.ChunksHorizontal) + cy);
-            return new MapChunk() { m_map = map, m_startCell = index * Config.MAP_CHUNK_SIZE2, m_chunkX = cx, m_chunkY = cy, m_chunkZ = cz };
+            var index = map.IndexXZ(cx * Config.MAP_CHUNK_SIZE, cz * Config.MAP_CHUNK_SIZE);// ((cz * map.ChunksHorizontal * map.ChunksHorizontal) + (cx * map.ChunksHorizontal) + cy);
+            return new MapChunk()
+            {
+                m_map = map,
+                m_startCell = index + y * Config.MAP_CHUNK_SIZE,
+                m_chunkX = cx,
+                m_chunkY = cy,
+                m_chunkZ = cz
+            };
         }
+
+        //public static MapChunk GetChunk(Map map, int cx, int cy, int cz)
+        //{
+
+        //}
     }
 
 
