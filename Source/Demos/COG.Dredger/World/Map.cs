@@ -53,6 +53,7 @@ namespace COG.Dredger
 
         public int ChunksHorizontal { get { return m_chunksHorizontal; } }
         public int CellsHorizontal { get { return m_chunksHorizontal * Config.MAP_CHUNK_SIZE; } }
+
         //public IEnumerable<MapChunk> Chunks
         //{
         //    get
@@ -73,10 +74,31 @@ namespace COG.Dredger
 
         //    return ((cz * ChunksHorizontal * ChunksHorizontal) + (cx * ChunksHorizontal));
         //}
-
-        public int IndexXZ(int x, int z)
+        public int CellY(int y)
         {
-            return ((z * CellsHorizontal * CellsHorizontal) + (x * CellsHorizontal)) * Config.MAP_HEIGHT;
+            return y * CellsHorizontal * CellsHorizontal;
+        }
+
+        public int CellYZ(int y, int z)
+        {
+            return y * CellsHorizontal * CellsHorizontal + z * CellsHorizontal;
+        }
+
+        public int CellXYZ(int x, int y, int z)
+        {
+
+            return y * CellsHorizontal * Config.MAP_HEIGHT + z * CellsHorizontal + x;
+        }
+
+        public void IterateYZ(Action<int, int> action)
+        {
+            for (var y = 0; y < Config.MAP_HEIGHT; y++)
+            {
+                for (var z = 0; z < CellsHorizontal; z++)
+                {
+                    action(z, y);
+                }
+            }
         }
 
         public void IterateZX(Action<int, int> action)
@@ -92,18 +114,19 @@ namespace COG.Dredger
 
         public void GenerateMap(IGenerator gen)
         {
+            var ystep = CellY(1);
             IterateZX((x, z) =>
             {
-                var bi = IndexXZ(x, z);
+                var bi = CellXYZ(x, 0, z);
                 var height = gen.GetHeight(x, z, Config.MAP_HEIGHT / 2);
                 for (var y = 0; y <= height; y++)
                 {
                     if (y < height - 4)
-                        m_cells[bi + y] = VoxelDescriptor.Stone.Block;
+                        m_cells[bi + y * ystep] = VoxelDescriptor.Stone.Block;
                     else if (y == height)
-                        m_cells[bi + y] = VoxelDescriptor.Grass.Block;
+                        m_cells[bi + y * ystep] = VoxelDescriptor.Grass.Block;
                     else
-                        m_cells[bi + y] = VoxelDescriptor.Dirt.Block;
+                        m_cells[bi + y * ystep] = VoxelDescriptor.Dirt.Block;
                 }
             });
 
@@ -114,62 +137,124 @@ namespace COG.Dredger
         }
     }
 
-    public struct MapChunk
+    public class MapLevel
     {
         private Map m_map;
-        private int m_startCell;
-        private int m_chunkX, m_chunkY, m_chunkZ;
+        private Voxel[] m_cells;
+        private VoxelMeta[] m_cellsMeta;
 
-        public bool IsValid { get { return m_startCell == -1 || m_map == null; } }
-        public int ChunkX { get { return m_chunkX; } }
-        public int ChunkY { get { return m_chunkY; } }
-        public int ChunkZ { get { return m_chunkZ; } }
-        public int CellOffset { get { return m_startCell; } }
-
-        public int GetIndex(int x, int z)
+        public MapLevel(Map map)
         {
-            return Config.MAP_CHUNK_SIZE * z + x + m_startCell;
+
         }
-
-        public static MapChunk Invalid { get { return new MapChunk() { m_startCell = -1 }; } }
-
-        public static MapChunk GetChunkFromCell(Map map, int x, int y, int z)
-        {
-            if (Utility.NotInRange(x, 0, map.ChunksHorizontal * Config.MAP_CHUNK_SIZE))
-                return Invalid;
-
-            if (Utility.NotInRange(z, 0, map.ChunksHorizontal * Config.MAP_CHUNK_SIZE))
-                return Invalid;
-
-            //is this a good idea, it would at least semi keep neighboring cells in memory close together
-            //on the other hand its treating chunks as cubes rather than layers which is how
-            //the game will be using them
-            //if (Utility.NotInRange(y, 0, map.ChunksY * Config.MAP_COLUMN_SIZE))
-            //    return Invalid;
-
-            if (Utility.NotInRange(y, 0, Config.MAP_HEIGHT))
-                return Invalid;
-
-            var cx = x / Config.MAP_CHUNK_SIZE;
-            var cz = z / Config.MAP_CHUNK_SIZE;
-            var cy = y;
-
-            var index = map.IndexXZ(cx * Config.MAP_CHUNK_SIZE, cz * Config.MAP_CHUNK_SIZE);// ((cz * map.ChunksHorizontal * map.ChunksHorizontal) + (cx * map.ChunksHorizontal) + cy);
-            return new MapChunk()
-            {
-                m_map = map,
-                m_startCell = index + y * Config.MAP_CHUNK_SIZE,
-                m_chunkX = cx,
-                m_chunkY = cy,
-                m_chunkZ = cz
-            };
-        }
-
-        //public static MapChunk GetChunk(Map map, int cx, int cy, int cz)
-        //{
-
-        //}
     }
+
+    public enum MapCellRenderType
+    {
+        Empty,
+        Open,
+        Solid
+    }
+
+    public class MapCell
+    {
+        public virtual bool AllowGreedy(MapCell cell) { return false; }
+
+        public virtual bool Visible { get { return false; } }
+
+        public virtual bool HasFloor { get { return false; } }
+
+        public virtual bool CanMove { get { return false; } }
+
+        public virtual bool CanBuild { get { return false; } }
+
+    }
+
+    public class SolidCell : MapCell
+    {
+        public virtual Color Color { get { return Color.White; } }
+
+        public override bool Visible { get { return true; } }
+
+        public override bool AllowGreedy(MapCell cell)
+        {
+
+
+            return base.AllowGreedy(cell);
+        }
+    }
+
+    public class Dirt : MapCell
+    {
+
+    }
+
+    public class Stone : MapCell
+    {
+
+    }
+
+    public class Grass : SolidCell
+    {
+
+    }
+
+    //public struct MapChunk
+    //{
+    //    private Map m_map;
+    //    private int m_startCell;
+    //    private int m_chunkX, m_chunkY, m_chunkZ;
+
+    //    public bool IsValid { get { return m_startCell == -1 || m_map == null; } }
+    //    public int ChunkX { get { return m_chunkX; } }
+    //    public int ChunkY { get { return m_chunkY; } }
+    //    public int ChunkZ { get { return m_chunkZ; } }
+    //    public int CellOffset { get { return m_startCell; } }
+
+    //    public int GetIndex(int x, int z)
+    //    {
+    //        return Config.MAP_CHUNK_SIZE * z + x + m_startCell;
+    //    }
+
+    //    public static MapChunk Invalid { get { return new MapChunk() { m_startCell = -1 }; } }
+
+    //    public static MapChunk GetChunkFromCell(Map map, int x, int y, int z)
+    //    {
+    //        if (Utility.NotInRange(x, 0, map.ChunksHorizontal * Config.MAP_CHUNK_SIZE))
+    //            return Invalid;
+
+    //        if (Utility.NotInRange(z, 0, map.ChunksHorizontal * Config.MAP_CHUNK_SIZE))
+    //            return Invalid;
+
+    //        //is this a good idea, it would at least semi keep neighboring cells in memory close together
+    //        //on the other hand its treating chunks as cubes rather than layers which is how
+    //        //the game will be using them
+    //        //if (Utility.NotInRange(y, 0, map.ChunksY * Config.MAP_COLUMN_SIZE))
+    //        //    return Invalid;
+
+    //        if (Utility.NotInRange(y, 0, Config.MAP_HEIGHT))
+    //            return Invalid;
+
+    //        var cx = x / Config.MAP_CHUNK_SIZE;
+    //        var cz = z / Config.MAP_CHUNK_SIZE;
+    //        var cy = y;
+
+    //        var index = map.IndexXZ(cx * Config.MAP_CHUNK_SIZE, cz * Config.MAP_CHUNK_SIZE);// ((cz * map.ChunksHorizontal * map.ChunksHorizontal) + (cx * map.ChunksHorizontal) + cy);
+    //        return new MapChunk()
+    //        {
+    //            m_map = map,
+    //            m_startCell = index + y * Config.MAP_CHUNK_SIZE,
+    //            m_chunkX = cx,
+    //            m_chunkY = cy,
+    //            m_chunkZ = cz
+    //        };
+    //    }
+
+    //    //public static MapChunk GetChunk(Map map, int cx, int cy, int cz)
+    //    //{
+
+    //    //}
+    //}
 
 
     public class Map2 : DisposableObject
