@@ -441,8 +441,12 @@ namespace COG.Dredger.States
 
                 m_opaqueChunkProgram.SetUniformVec("tint", new Vector3(1, 0, 0));
                 m_opaqueChunkProgram.SetUniformFloat("alpha", 0.75f);
+
+                //for (var i = 0; i < 4000;i++ )
                 hover.RenderOpaque(m_opaqueChunkProgram, m);
+
             }
+
 
             //var len = 100;
             //var start = m_camera.Position;
@@ -575,25 +579,33 @@ namespace COG.Dredger.States
                 }
 
                 current = OpenTK.Input.Mouse.GetState();
-                var dx = (previous.X - current.X) *  delta;
-                var dy = (previous.Y - current.Y) * delta;
 
-                //var pitch = (float)Math.Sin(m_camera.Direction.Y);
+                var m_cameraSensitivity = 2.25f;
+                var m_cameraSensitivitySqr = 20;
+                var dx = Utility.Clamp((previous.X - current.X), m_cameraSensitivitySqr, -m_cameraSensitivitySqr);
+                var dy = Utility.Clamp((previous.Y - current.Y), m_cameraSensitivitySqr, -m_cameraSensitivitySqr);
 
-                yaw += dx;
-                pitch += dy;
+                var moveDirection = new Vector2(dx, dy);
+                if (moveDirection.LengthSquared > 0)
+                {
+                    //moveDirection.Normalize();
 
-                pitch = Utility.Clamp(pitch, 1.5f, -1.5f);
-                yaw = Utility.WrapAngle(yaw);
+                    //var pitch = (float)Math.Sin(m_camera.Direction.Y);
 
-                var qyaw = Quaternion.FromAxisAngle(Vector3.UnitY, yaw);
-                var qpitch = Quaternion.FromAxisAngle(Vector3.UnitX, pitch);
+                    yaw += moveDirection.X * m_cameraSensitivity * delta;
+                    pitch += moveDirection.Y * m_cameraSensitivity * delta;
 
-                var p = Vector3.Transform(-Vector3.UnitZ, qyaw * qpitch);
-                p.Normalize();
+                    pitch = Utility.Clamp(pitch, 1.5f, -1.5f);
+                    yaw = Utility.WrapAngle(yaw);
 
-                m_worldCamera.Direction = p;
+                    var qyaw = Quaternion.FromAxisAngle(Vector3.UnitY, yaw);
+                    var qpitch = Quaternion.FromAxisAngle(Vector3.UnitX, pitch);
 
+                    var p = Vector3.Transform(-Vector3.UnitZ, qyaw * qpitch);
+                    p.Normalize();
+
+                    m_worldCamera.Direction = p;
+                }
                 //Console.WriteLine("{0}:{1} - {2}:{3} - {4}:{5}", previous.X, previous.Y, current.X, current.Y, dx, dy);
 
                 SetMouseCenter();

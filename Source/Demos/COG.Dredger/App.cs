@@ -160,30 +160,30 @@ namespace COG.Dredger
         [STAThread]
         static void Main(string[] args)
         {
-            //foreach (var p in GridRayTracer.raytrace(5, 5, 5, 0, 0, 0))
-            //{
-            //    Console.WriteLine(p);
-            //}
-
-            for (var y = 0; y < 2; y++)
-                for (var z = 0; z < 4; z++)
-                    for (var x = 0; x < 4; x++)
-                        ChunkXY(x, z, 2, 2, 2);
-
-
-
+            ////foreach (var p in GridRayTracer.raytrace(5, 5, 5, 0, 0, 0))
+            ////{
+            ////    Console.WriteLine(p);
+            ////}
 
             //for (var y = 0; y < 2; y++)
             //    for (var z = 0; z < 4; z++)
             //        for (var x = 0; x < 4; x++)
-            //            IndexXYZ(x, z, 2, 2, 2);
+            //            ChunkXY(x, z, 2, 2, 2);
 
-            //    IndexXZ(0, 0);
-            //IndexXZ(2, 1);
-            //IndexXZ(2, 2);
-            //IndexXZ(1, 3);
-            //IndexXZ(3, 2);
-            Console.Read();
+
+
+
+            ////for (var y = 0; y < 2; y++)
+            ////    for (var z = 0; z < 4; z++)
+            ////        for (var x = 0; x < 4; x++)
+            ////            IndexXYZ(x, z, 2, 2, 2);
+
+            ////    IndexXZ(0, 0);
+            ////IndexXZ(2, 1);
+            ////IndexXZ(2, 2);
+            ////IndexXZ(1, 3);
+            ////IndexXZ(3, 2);
+            //Console.Read();
             //for (var i = 0f; i < 2f; i += 0.05f)
             //{
             //    var truncate = Math.Truncate(i + 0.2f);

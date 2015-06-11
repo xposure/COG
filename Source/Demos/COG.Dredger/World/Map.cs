@@ -149,11 +149,25 @@ namespace COG.Dredger
         }
     }
 
-    public enum MapCellRenderType
+    [Flags]
+    public enum Test : int
     {
-        Empty,
-        Open,
-        Solid
+        Me,
+        You
+    }
+
+    public static class TestEnum
+    {
+        public static bool Has(int i, int v)
+        {
+            return (i & v) == v;
+        }
+
+        public static bool Has()
+        {
+
+            return Has((int)Test.Me, (int)Test.You);
+        }
     }
 
     public class MapCell
@@ -163,6 +177,10 @@ namespace COG.Dredger
         public virtual bool Visible { get { return false; } }
 
         public virtual bool HasFloor { get { return false; } }
+
+        public virtual bool HasWall { get { return false; } }
+
+        public virtual bool HasEntity { get { return false; } }
 
         public virtual bool CanMove { get { return false; } }
 
